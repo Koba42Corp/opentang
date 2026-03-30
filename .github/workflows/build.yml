@@ -66,11 +66,15 @@ jobs:
             libpango1.0-dev \
             libglib2.0-dev
 
+      - name: Add Rust target (macOS ARM)
+        if: matrix.target == 'aarch64-apple-darwin'
+        run: rustup target add aarch64-apple-darwin
+
       - name: Install frontend deps
         run: npm ci
 
       - name: Build
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.5.18
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
