@@ -33,9 +33,47 @@ pub enum CheckStatus {
     Fail,
 }
 
+fn find_docker_binary() -> Option<std::path::PathBuf> {
+    // Common paths where Docker can be installed
+    let common_paths = vec![
+        "/usr/local/bin/docker",
+        "/opt/homebrew/bin/docker",        // Apple Silicon Homebrew
+        "/usr/bin/docker",
+        "/usr/local/lib/docker/cli-plugins/docker",
+        "/Applications/Docker.app/Contents/Resources/bin/docker",
+    ];
+
+    // First check if it's in PATH via which
+    if let Ok(output) = std::process::Command::new("sh")
+        .arg("-c")
+        .arg("which docker || command -v docker")
+        .env("PATH", "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin")
+        .output()
+    {
+        if output.status.success() {
+            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path.is_empty() {
+                return Some(std::path::PathBuf::from(path));
+            }
+        }
+    }
+
+    // Fall back to checking common paths
+    for path in common_paths {
+        let p = std::path::Path::new(path);
+        if p.exists() {
+            return Some(p.to_path_buf());
+        }
+    }
+
+    None
+}
+
 fn detect_docker() -> (bool, Option<String>, bool) {
+    let docker_bin = find_docker_binary().unwrap_or_else(|| std::path::PathBuf::from("docker"));
+
     // Check if docker is installed by running `docker --version`
-    let version_output = std::process::Command::new("docker")
+    let version_output = std::process::Command::new(&docker_bin)
         .arg("--version")
         .output();
 
@@ -54,7 +92,7 @@ fn detect_docker() -> (bool, Option<String>, bool) {
 
     // Check if docker daemon is running via `docker info`
     let running = if installed {
-        std::process::Command::new("docker")
+        std::process::Command::new(&docker_bin)
             .arg("info")
             .output()
             .map(|o| o.status.success())
