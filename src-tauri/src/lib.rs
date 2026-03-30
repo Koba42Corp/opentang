@@ -1,9 +1,13 @@
 // OpenTang — Tauri backend
-// M4: First Blood — Real Docker Compose install engine.
+// M6: Package Registry — App Store, Dashboard, install state persistence.
 
 mod commands;
 use commands::system::system_check;
 use commands::install::{generate_compose, start_install, get_service_status};
+use commands::registry::{
+    get_registry, install_package, remove_package, update_package,
+    load_install_state, save_install_state,
+};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,6 +18,12 @@ pub fn run() {
             generate_compose,
             start_install,
             get_service_status,
+            get_registry,
+            install_package,
+            remove_package,
+            update_package,
+            load_install_state,
+            save_install_state,
         ])
         .run(tauri::generate_context!())
         .expect("error while running OpenTang")
