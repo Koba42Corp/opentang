@@ -213,6 +213,25 @@
       "koba42_featured": false,
       "official": true,
       "compose_service": "searxng"
+    },
+    {
+      "id": "sage-wallet",
+      "name": "Sage Wallet",
+      "version": "latest",
+      "description": "The premier Chia blockchain wallet. Light wallet with WalletConnect, NFTs, CATs, DIDs, and full offer file support.",
+      "category": "crypto",
+      "tags": ["chia", "crypto", "wallet", "blockchain", "xch", "nft", "defi"],
+      "icon": "wallet",
+      "min_ram_mb": 256,
+      "min_disk_gb": 1,
+      "port": null,
+      "install_type": "desktop_app",
+      "download_url": "https://github.com/xch-dev/sage/releases/latest",
+      "source_url": "https://github.com/xch-dev/sage",
+      "koba42_featured": true,
+      "chia_ecosystem": true,
+      "official": false,
+      "compose_service": null
     }
   ]
 }
