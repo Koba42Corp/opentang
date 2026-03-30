@@ -7,7 +7,7 @@ import {
   CheckCircle, ExternalLink, RotateCcw, PlusCircle, BookOpen,
   Package, XCircle, Loader, AlertTriangle,
 } from "lucide-react";
-import { useWizardStore, ServiceStatus } from "../../../store/useWizardStore";
+import { useWizardStore, ServiceStatus, InstallState } from "../../../store/useWizardStore";
 import { Button } from "../../shared/Button";
 import { ServiceLink } from "../../../types/install";
 
@@ -40,6 +40,8 @@ export default function Step8Done() {
     installPath,
     serviceStatuses,
     setServiceStatuses,
+    setAppMode,
+    setInstallState,
   } = useWizardStore();
 
   // Track timed-out services (didn't come up within 60s)
@@ -125,14 +127,34 @@ export default function Step8Done() {
     edition === "hermes" ? "Hermes" :
     edition === "openclaw" ? "OpenClaw" : "OpenTang";
 
-  const coolifyUrl = getBaseUrl(8000);
+  // Build the list of all installed package ids
+  const installedPackages = [
+    ...(edition ? [edition] : []),
+    "coolify",
+    ...selectedPackages,
+    ...(llmMode === "local" ? ["ollama"] : []),
+  ];
 
   async function openDashboard() {
+    // Persist install state so future launches skip the wizard
+    const state: InstallState = {
+      version: "0.1.0",
+      installedAt: new Date().toISOString(),
+      edition: edition ?? "openclaw",
+      installPath,
+      networkMode: networkMode ?? "local",
+      domain: networkConfig?.domain ?? null,
+      installedPackages,
+    };
+
     try {
-      await openUrl(coolifyUrl);
+      await invoke("save_install_state", { state, installPath });
     } catch {
-      window.open(coolifyUrl, "_blank", "noreferrer");
+      // Non-fatal — still transition to management mode
     }
+
+    setInstallState(state);
+    setAppMode("management");
   }
 
   async function viewLogs(id: string) {
@@ -219,7 +241,7 @@ export default function Step8Done() {
         })}
       </div>
 
-      {/* Primary CTA */}
+      {/* Primary CTA — enters management mode */}
       <button
         onClick={openDashboard}
         className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-ot-orange-500 hover:bg-ot-orange-400 text-white font-semibold text-base transition-colors mb-3"
@@ -234,8 +256,7 @@ export default function Step8Done() {
           onClick={() => goToStep(4)}
           className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-ot-border bg-ot-elevated text-sm text-ot-text hover:bg-ot-overlay transition-colors"
         >
-          <PlusCircle className="w-4 h-4 text-ot-orange-400" />
-          Add more packages
+          Back to packages
         </button>
         <a
           href="#"
@@ -244,15 +265,6 @@ export default function Step8Done() {
           <BookOpen className="w-4 h-4 text-ot-text-muted" />
           View documentation
         </a>
-      </div>
-
-      {/* App Store placeholder */}
-      <div className="rounded-xl border border-dashed border-ot-border p-4 flex items-center gap-3 mb-8 opacity-60">
-        <Package className="w-5 h-5 text-ot-text-muted flex-shrink-0" />
-        <div>
-          <p className="text-sm text-ot-text font-medium">App Store</p>
-          <p className="text-xs text-ot-text-muted">Browse and install additional community packages — coming in v0.2.0</p>
-        </div>
       </div>
 
       {/* Footer */}

@@ -50,7 +50,57 @@ export interface ServiceStatus {
   ports: string[];
 }
 
+// ── M6: Registry types ────────────────────────────────────────────────────────
+
+export interface Package {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  category: string;
+  tags: string[];
+  icon: string;
+  min_ram_mb: number;
+  min_disk_gb: number;
+  port: number;
+  url_path?: string;
+  koba42_featured: boolean;
+  official: boolean;
+  compose_service: string;
+}
+
+export interface Registry {
+  version: string;
+  updated: string;
+  packages: Package[];
+}
+
+export interface InstallState {
+  version: string;
+  installedAt: string;
+  edition: string;
+  installPath: string;
+  networkMode: string;
+  domain: string | null;
+  installedPackages: string[];
+}
+
+// ── Store interface ───────────────────────────────────────────────────────────
+
 interface WizardState {
+  // M6: App mode — wizard during setup, management after install
+  appMode: "wizard" | "management";
+  setAppMode: (mode: "wizard" | "management") => void;
+
+  // M6: Persisted install state
+  installState: InstallState | null;
+  setInstallState: (state: InstallState) => void;
+
+  // M6: Active management tab
+  managementTab: "dashboard" | "appstore" | "settings";
+  setManagementTab: (tab: "dashboard" | "appstore" | "settings") => void;
+
+  // Navigation
   currentStep: number;
   completedSteps: number[];
 
@@ -111,6 +161,15 @@ interface WizardState {
 export const TOTAL_STEPS = 9; // Steps 0–8
 
 export const useWizardStore = create<WizardState>()((set) => ({
+  appMode: "wizard",
+  setAppMode: (appMode) => set({ appMode }),
+
+  installState: null,
+  setInstallState: (installState) => set({ installState }),
+
+  managementTab: "dashboard",
+  setManagementTab: (managementTab) => set({ managementTab }),
+
   currentStep: 0,
   completedSteps: [],
 
