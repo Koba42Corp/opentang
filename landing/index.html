@@ -9,9 +9,12 @@
   <meta property="og:description" content="Self-hosted AI + developer environment bootstrapper. Homebrew meets Docker Desktop meets an AI-native App Store.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://opentang.koba42.com">
+  <meta property="og:image" content="https://opentang.koba42.com/logo-with-text.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="OpenTang — Your stack. Your rules.">
   <meta name="twitter:description" content="Self-hosted AI + developer environment bootstrapper. Open source. Cross-platform.">
+  <meta name="twitter:image" content="https://opentang.koba42.com/logo-with-text.png">
+  <link rel="icon" type="image/png" href="logo-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -76,8 +79,9 @@
       text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
+    .nav-logo img { height: 32px; width: auto; }
     .nav-logo span { color: var(--text-primary); }
     .nav-links { display: flex; gap: 32px; align-items: center; }
     .nav-links a {
@@ -120,6 +124,17 @@
       height: 800px;
       background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, transparent 70%);
       pointer-events: none;
+    }
+    .hero-logo {
+      width: 180px;
+      height: auto;
+      margin-bottom: 32px;
+      filter: drop-shadow(0 8px 32px rgba(249, 115, 22, 0.3));
+      animation: floatLogo 3s ease-in-out infinite;
+    }
+    @keyframes floatLogo {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
     }
     .hero-badge {
       display: inline-flex;
@@ -465,7 +480,7 @@
   <!-- NAV -->
   <nav>
     <div class="nav-inner">
-      <a href="#" class="nav-logo">🔶 Open<span>Tang</span></a>
+      <a href="#" class="nav-logo"><img src="logo-icon.png" alt="OpenTang"> Open<span>Tang</span></a>
       <div class="nav-links">
         <a href="#features">Features</a>
         <a href="#stack">Stack</a>
@@ -479,6 +494,7 @@
 
   <!-- HERO -->
   <section class="hero">
+    <img src="logo-with-text.png" alt="OpenTang" class="hero-logo">
     <div class="hero-badge">
       <span class="dot"></span>
       Open Source · Apache 2.0
