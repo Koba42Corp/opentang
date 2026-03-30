@@ -41,6 +41,13 @@ export interface InstallStep {
   id: string;
   label: string;
   status: "pending" | "active" | "done" | "error";
+  message?: string;
+}
+
+export interface ServiceStatus {
+  name: string;
+  status: "running" | "stopped" | "error";
+  ports: string[];
 }
 
 interface WizardState {
@@ -67,9 +74,14 @@ interface WizardState {
   // Step 6
   credentials: Record<string, { username: string; password: string }>;
 
-  // Step 7
+  // Step 7 — install
   isInstalling: boolean;
   installProgress: InstallStep[];
+  installPath: string;
+  installLogs: string[];
+
+  // Step 8 — done
+  serviceStatuses: ServiceStatus[];
 
   // Navigation actions
   goToStep: (step: number) => void;
@@ -87,8 +99,13 @@ interface WizardState {
   setNetworkMode: (mode: WizardState["networkMode"]) => void;
   setNetworkConfig: (config: NetworkConfig) => void;
   setCredentials: (creds: Record<string, { username: string; password: string }>) => void;
+
+  // Install actions
   startInstall: () => void;
-  updateInstallStep: (id: string, status: InstallStep["status"]) => void;
+  setInstallPath: (path: string) => void;
+  updateInstallStep: (id: string, status: InstallStep["status"], message?: string) => void;
+  appendInstallLog: (line: string) => void;
+  setServiceStatuses: (statuses: ServiceStatus[]) => void;
 }
 
 export const TOTAL_STEPS = 9; // Steps 0–8
@@ -108,6 +125,9 @@ export const useWizardStore = create<WizardState>()((set) => ({
   credentials: {},
   isInstalling: false,
   installProgress: [],
+  installPath: "~/.opentang",
+  installLogs: [],
+  serviceStatuses: [],
 
   goToStep: (step) =>
     set({ currentStep: Math.max(0, Math.min(step, TOTAL_STEPS - 1)) }),
@@ -146,12 +166,21 @@ export const useWizardStore = create<WizardState>()((set) => ({
 
   setSelectedPackages: (packages) => set({ selectedPackages: packages }),
 
-  startInstall: () => set({ isInstalling: true }),
+  startInstall: () => set({ isInstalling: true, installLogs: [] }),
 
-  updateInstallStep: (id, status) =>
+  setInstallPath: (installPath) => set({ installPath }),
+
+  updateInstallStep: (id, status, message) =>
     set((state) => ({
       installProgress: state.installProgress.map((step) =>
-        step.id === id ? { ...step, status } : step
+        step.id === id ? { ...step, status, ...(message !== undefined ? { message } : {}) } : step
       ),
     })),
+
+  appendInstallLog: (line) =>
+    set((state) => ({
+      installLogs: [...state.installLogs, line],
+    })),
+
+  setServiceStatuses: (serviceStatuses) => set({ serviceStatuses }),
 }));
