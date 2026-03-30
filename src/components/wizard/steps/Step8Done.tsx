@@ -1,87 +1,125 @@
-import { PartyPopper, ExternalLink, RotateCcw } from "lucide-react";
+import { CheckCircle, ExternalLink, RotateCcw, PlusCircle, BookOpen, Package } from "lucide-react";
 import { useWizardStore } from "../../../store/useWizardStore";
 import { Button } from "../../shared/Button";
-import { Card } from "../../shared/Card";
+
+interface ServiceLink {
+  name: string;
+  port: number;
+  path?: string;
+}
+
+const SERVICE_LINKS: ServiceLink[] = [
+  { name: "Coolify Dashboard", port: 8000 },
+  { name: "Portainer", port: 9000 },
+  { name: "Gitea", port: 3000 },
+  { name: "Grafana", port: 3001 },
+  { name: "Prometheus", port: 9090 },
+];
 
 export default function Step8Done() {
-  const { completeStep, currentStep, goToStep } = useWizardStore();
+  const { goToStep, selectedPackages, networkMode, networkConfig, edition } = useWizardStore();
 
-  function handleFinish() {
-    completeStep(currentStep);
+  function getBaseUrl(port: number) {
+    if (networkMode === "internet" && networkConfig?.domain) {
+      return `https://${networkConfig.domain}`;
+    }
+    if (networkMode === "lan" && networkConfig?.localIp) {
+      return `http://${networkConfig.localIp}:${port}`;
+    }
+    return `http://localhost:${port}`;
   }
 
-  function handleReset() {
-    goToStep(0);
-  }
+  const editionName = edition === "nanoclaw" ? "NanoClaw" : edition === "hermes" ? "Hermes" : edition === "openclaw" ? "OpenClaw" : "OpenTang";
+
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <PartyPopper className="w-6 h-6 text-ot-orange-500" />
-          <h1 className="text-2xl font-bold text-ot-text">Done!</h1>
+      {/* Hero */}
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-ot-success/10 border border-ot-success/30 mb-6">
+          <CheckCircle className="w-10 h-10 text-ot-success" />
         </div>
-        <p className="text-ot-text-secondary text-sm">
-          Your stack has been configured. Here's a summary of what was set up.
-        </p>
+        <h1 className="text-3xl font-bold text-ot-text mb-2">OpenTang is ready!</h1>
+        <p className="text-ot-orange-400 font-medium">Your self-hosted AI stack is up and running.</p>
+        <p className="text-ot-text-secondary text-sm mt-1">Edition: {editionName} · {selectedPackages.length + 3} services installed</p>
       </div>
 
-      <Card>
-        <div className="flex items-center justify-center py-12 flex-col gap-4">
-          {/* Success icon */}
-          <div className="w-16 h-16 rounded-full bg-ot-success/10 border border-ot-success/30 flex items-center justify-center">
-            <PartyPopper className="w-8 h-8 text-ot-success" />
-          </div>
-
-          <div className="text-center">
-            <p className="text-ot-text font-semibold text-lg mb-1">
-              Setup Complete
-            </p>
-            <p className="text-ot-text-secondary text-sm max-w-sm">
-              Service URLs, quick-access links to Coolify dashboard, community
-              invite, and "Add More Packages" shortcut coming in the next milestone.
-            </p>
-          </div>
-
-          <span className="px-3 py-1 rounded-full bg-ot-overlay border border-ot-border text-ot-text-muted text-xs font-mono">
-            M3 feature
-          </span>
+      {/* Installed services checklist */}
+      <div className="rounded-xl border border-ot-border bg-ot-elevated overflow-hidden mb-4">
+        <div className="px-4 py-3 border-b border-ot-border">
+          <span className="text-xs font-semibold text-ot-text-secondary uppercase tracking-wider">Installed services</span>
         </div>
-      </Card>
-
-      {/* Quick links placeholder */}
-      <Card className="mt-4">
-        <h3 className="text-sm font-semibold text-ot-text-secondary uppercase tracking-wider mb-3">
-          Quick Access
-        </h3>
-        <div className="space-y-2">
-          {["Coolify Dashboard", "Portainer", "Gitea", "Grafana"].map((service) => (
-            <div
-              key={service}
-              className="flex items-center justify-between py-2 px-3 rounded-lg bg-ot-overlay border border-ot-border opacity-50"
-            >
-              <span className="text-sm text-ot-text-secondary">{service}</span>
-              <div className="flex items-center gap-2 text-ot-text-muted text-xs">
-                <span className="font-mono">localhost:????</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </div>
+        {SERVICE_LINKS.map(({ name, port }, i) => (
+          <div
+            key={name}
+            className={[
+              "flex items-center justify-between px-4 py-3",
+              i !== SERVICE_LINKS.length - 1 ? "border-b border-ot-border" : "",
+            ].join(" ")}
+          >
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-4 h-4 text-ot-success flex-shrink-0" />
+              <span className="text-sm text-ot-text">{name}</span>
             </div>
-          ))}
-        </div>
-        <p className="text-ot-text-muted text-xs mt-3">
-          Service URLs will be populated after installation completes.
-        </p>
-      </Card>
+            <a
+              href={getBaseUrl(port)}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-xs text-ot-orange-400 hover:text-ot-orange-300 transition-colors font-mono"
+            >
+              {getBaseUrl(port)}
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        ))}
+      </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-3 mt-6">
-        <Button variant="ghost" onClick={handleReset}>
-          <RotateCcw className="w-4 h-4" />
-          Start Over
-        </Button>
-        <Button onClick={handleFinish}>
-          Finish
-          <PartyPopper className="w-4 h-4" />
+      {/* Primary CTA */}
+      <a
+        href={getBaseUrl(8000)}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-ot-orange-500 hover:bg-ot-orange-400 text-white font-semibold text-base transition-colors mb-3"
+      >
+        Open Dashboard
+        <ExternalLink className="w-4 h-4" />
+      </a>
+
+      {/* Secondary actions */}
+      <div className="grid grid-cols-2 gap-3 mb-8">
+        <button
+          onClick={() => goToStep(4)}
+          className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-ot-border bg-ot-elevated text-sm text-ot-text hover:bg-ot-overlay transition-colors"
+        >
+          <PlusCircle className="w-4 h-4 text-ot-orange-400" />
+          Add more packages
+        </button>
+        <a
+          href="#"
+          className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-ot-border bg-ot-elevated text-sm text-ot-text hover:bg-ot-overlay transition-colors"
+        >
+          <BookOpen className="w-4 h-4 text-ot-text-muted" />
+          View documentation
+        </a>
+      </div>
+
+      {/* App Store placeholder */}
+      <div className="rounded-xl border border-dashed border-ot-border p-4 flex items-center gap-3 mb-8 opacity-60">
+        <Package className="w-5 h-5 text-ot-text-muted flex-shrink-0" />
+        <div>
+          <p className="text-sm text-ot-text font-medium">App Store</p>
+          <p className="text-xs text-ot-text-muted">Browse and install additional community packages — coming in v0.2.0</p>
+        </div>
+      </div>
+
+      {/* Footer attribution + reset */}
+      <div className="flex items-center justify-between pt-4 border-t border-ot-border">
+        <p className="text-xs text-ot-text-muted">
+          Powered by <span className="text-ot-orange-400 font-semibold">Koba42</span>
+        </p>
+        <Button variant="ghost" size="sm" onClick={() => goToStep(0)}>
+          <RotateCcw className="w-3.5 h-3.5" />
+          Start over
         </Button>
       </div>
     </div>
