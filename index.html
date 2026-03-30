@@ -3,21 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenTang — Your stack. Your rules.</title>
-  <meta name="description" content="The open-source self-hosted AI + developer environment bootstrapper. Set up Coolify, OpenClaw, Gitea, Grafana and more — in minutes, not days." />
+  <title>OpenTang — Stop renting. Start owning.</title>
+  <meta name="description" content="OpenTang gives you a complete self-hosted AI + developer stack — installed, secured, and running on YOUR machine in under 10 minutes. Free. Open source. Always." />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="OpenTang — Your stack. Your rules." />
-  <meta property="og:description" content="The open-source self-hosted AI + developer environment bootstrapper." />
+  <meta property="og:title" content="OpenTang — Stop renting. Start owning." />
+  <meta property="og:description" content="A complete self-hosted AI + developer stack — installed, secured, and running on YOUR machine in under 10 minutes." />
   <meta property="og:image" content="https://api.dracattus.com/v1/files/koba42/5b08ccf263df2102b7f6b0c9fe19cb5e_opentang-logo-w-text.png" />
   <meta property="og:url" content="https://opentang.koba42.com" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OpenTang — Stop renting. Start owning." />
+  <meta name="twitter:description" content="Complete self-hosted AI + dev stack in under 10 minutes. Free. Open source. Always." />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -28,19 +30,34 @@
           colors: {
             bg: '#0A0A0B',
             surface: '#111114',
-            surfaceHigh: '#1A1A1F',
+            elevated: '#1A1A1F',
             border: '#2A2A32',
             orange: {
               DEFAULT: '#F97316',
               hover: '#EA6A0A',
-              dim: 'rgba(249,115,22,0.12)',
-              glow: 'rgba(249,115,22,0.35)',
+              dim: 'rgba(249,115,22,0.10)',
+              glow: 'rgba(249,115,22,0.30)',
             },
             muted: '#8B8B9A',
           },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          animation: {
+            'fade-up': 'fadeUp 0.6s ease forwards',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
+            'glow-pulse': 'glowPulse 3s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeUp: {
+              from: { opacity: '0', transform: 'translateY(20px)' },
+              to:   { opacity: '1', transform: 'translateY(0)' },
+            },
+            glowPulse: {
+              '0%,100%': { opacity: '0.5' },
+              '50%':      { opacity: '1' },
+            },
           },
         },
       },
@@ -48,909 +65,1344 @@
   </script>
 
   <style>
-    body { background-color: #0A0A0B; color: #E8E8EE; font-family: 'Inter', system-ui, sans-serif; }
-
-    /* Gradient hero background */
-    .hero-bg {
-      background:
-        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(249,115,22,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 60% 40% at 80% 60%, rgba(249,115,22,0.06) 0%, transparent 60%),
-        #0A0A0B;
+    /* ── Base ── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { background: #0A0A0B; }
+    body {
+      background: #0A0A0B;
+      color: #F8F8F8;
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    /* Subtle grid overlay */
-    .grid-bg {
-      background-image:
-        linear-gradient(rgba(249,115,22,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(249,115,22,0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
-    }
-
-    /* Terminal card */
-    .terminal-card {
-      background: #0D0D10;
-      border: 1px solid #2A2A32;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 0 60px rgba(249,115,22,0.12), 0 32px 64px rgba(0,0,0,0.6);
-    }
-
-    .terminal-titlebar {
-      background: #1A1A1F;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid #2A2A32;
-    }
-
-    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
-
-    /* Typing cursor */
-    .cursor::after {
-      content: '▋';
-      animation: blink 1s step-end infinite;
-      color: #F97316;
-    }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-    /* Progress bar */
-    .progress-bar {
-      background: linear-gradient(90deg, #F97316, #FB923C);
-      border-radius: 2px;
-      animation: grow 2.5s ease-in-out infinite alternate;
-    }
-    @keyframes grow {
-      from { width: 30%; }
-      to { width: 95%; }
-    }
-
-    /* Orange glow button */
-    .btn-orange {
-      background: #F97316;
-      color: #fff;
-      font-weight: 600;
-      border-radius: 8px;
-      transition: all 0.2s;
-      box-shadow: 0 0 0 0 rgba(249,115,22,0);
-    }
-    .btn-orange:hover {
-      background: #EA6A0A;
-      box-shadow: 0 0 24px rgba(249,115,22,0.45);
-      transform: translateY(-1px);
-    }
-
-    .btn-ghost {
-      border: 1px solid #2A2A32;
-      color: #E8E8EE;
-      font-weight: 600;
-      border-radius: 8px;
-      transition: all 0.2s;
-    }
-    .btn-ghost:hover {
-      border-color: #F97316;
-      color: #F97316;
-      background: rgba(249,115,22,0.06);
-    }
-
-    /* Package cards */
-    .pkg-card {
-      background: #111114;
-      border: 1px solid #2A2A32;
-      border-radius: 12px;
-      transition: all 0.2s;
-    }
-    .pkg-card:hover {
-      border-color: rgba(249,115,22,0.4);
-      background: #161619;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-
-    /* Download platform cards */
-    .dl-card {
-      background: #111114;
-      border: 1px solid #2A2A32;
-      border-radius: 16px;
-      transition: all 0.2s;
-    }
-    .dl-card:hover {
-      border-color: #F97316;
-      box-shadow: 0 0 32px rgba(249,115,22,0.15);
-    }
-
-    /* Step circles */
-    .step-num {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: rgba(249,115,22,0.12);
-      border: 2px solid #F97316;
-      color: #F97316;
-      font-weight: 800;
-      font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    /* Step connector */
-    .step-line {
-      flex: 1;
-      height: 2px;
-      background: linear-gradient(90deg, #F97316, rgba(249,115,22,0.2));
-    }
-
-    /* Featured badge */
-    .badge-featured {
-      background: rgba(249,115,22,0.15);
-      border: 1px solid rgba(249,115,22,0.4);
-      color: #F97316;
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      padding: 2px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
-
-    /* Section headings */
-    .section-tag {
-      color: #F97316;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    /* Scrollbar */
+    /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #0A0A0B; }
     ::-webkit-scrollbar-thumb { background: #2A2A32; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #F97316; }
 
-    /* Nav glass */
-    .nav-glass {
-      background: rgba(10,10,11,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+    /* ── Noise overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    /* ── Nav glass ── */
+    #main-nav {
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(10,10,11,0.80);
       border-bottom: 1px solid rgba(42,42,50,0.6);
     }
 
-    /* Shimmer on logo */
-    .logo-img {
-      filter: brightness(1);
-      transition: filter 0.2s;
+    /* ── Gradient text ── */
+    .grad-text {
+      background: linear-gradient(135deg, #F97316 0%, #FBBF24 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .logo-img:hover { filter: brightness(1.1); }
 
-    /* Feature check items */
-    .feature-check { color: #F97316; font-weight: 700; }
+    /* ── Orange glow button ── */
+    .btn-orange {
+      background: #F97316;
+      color: #0A0A0B;
+      font-weight: 700;
+      border-radius: 9999px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 0 24px rgba(249,115,22,0.35);
+    }
+    .btn-orange:hover {
+      background: #EA6A0A;
+      box-shadow: 0 0 40px rgba(249,115,22,0.55);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      border: 1.5px solid rgba(42,42,50,0.9);
+      color: #F8F8F8;
+      font-weight: 600;
+      border-radius: 9999px;
+      background: rgba(26,26,31,0.5);
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    }
+    .btn-ghost:hover {
+      border-color: #F97316;
+      background: rgba(249,115,22,0.08);
+      transform: translateY(-1px);
+    }
 
-    /* Smooth section fade-in */
-    .fade-up {
+    /* ── Hero radial glow ── */
+    .hero-glow {
+      position: absolute;
+      top: -200px; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 700px;
+      background: radial-gradient(ellipse at center, rgba(249,115,22,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Section glow ── */
+    .section-glow {
+      position: absolute;
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse at center, rgba(249,115,22,0.10) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Terminal ── */
+    .terminal {
+      background: #0D0D10;
+      border: 1px solid #2A2A32;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow: hidden;
+    }
+    .terminal-bar {
+      background: #1A1A1F;
+      border-bottom: 1px solid #2A2A32;
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .t-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+    /* ── Terminal typing animation ── */
+    .terminal-line { opacity: 0; }
+    .terminal-line.visible { opacity: 1; }
+
+    @keyframes typeLine {
+      from { opacity: 0; transform: translateX(-4px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Feature card hover ── */
+    .feat-card {
+      background: #111114;
+      border: 1px solid #2A2A32;
+      border-radius: 16px;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .feat-card:hover {
+      border-color: rgba(249,115,22,0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(249,115,22,0.12);
+    }
+
+    /* ── Package card ── */
+    .pkg-card {
+      background: #111114;
+      border: 1px solid #2A2A32;
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      cursor: default;
+    }
+    .pkg-card:hover {
+      border-color: #F97316;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(249,115,22,0.15);
+    }
+
+    /* ── Step circle ── */
+    .step-circle {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, #F97316, #EA6A0A);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 900;
+      color: #0A0A0B;
+      box-shadow: 0 0 32px rgba(249,115,22,0.4);
+      flex-shrink: 0;
+    }
+
+    /* ── Platform card ── */
+    .platform-card {
+      background: #111114;
+      border: 1.5px solid #2A2A32;
+      border-radius: 16px;
+      padding: 32px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .platform-card:hover {
+      border-color: rgba(249,115,22,0.5);
+      box-shadow: 0 0 48px rgba(249,115,22,0.10);
+    }
+
+    /* ── Separator dot ── */
+    .sep-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #F97316; display: inline-block; margin: 0 12px;
+    }
+
+    /* ── Pain/solution cards ── */
+    .pain-item {
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.18);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.9rem;
+      color: #F8F8F8;
+    }
+    .win-item {
+      background: rgba(249,115,22,0.07);
+      border: 1px solid rgba(249,115,22,0.22);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.9rem;
+      color: #F8F8F8;
+    }
+
+    /* ── Badge ── */
+    .badge-orange {
+      background: rgba(249,115,22,0.15);
+      color: #F97316;
+      border: 1px solid rgba(249,115,22,0.30);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .badge-muted {
+      background: rgba(139,139,154,0.10);
+      color: #8B8B9A;
+      border: 1px solid rgba(139,139,154,0.18);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    /* ── Wizard mock ── */
+    .wizard-step {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-radius: 8px;
+    }
+    .wizard-step.active {
+      background: rgba(249,115,22,0.12);
+      border: 1px solid rgba(249,115,22,0.30);
+    }
+    .wizard-step.done {
+      background: rgba(34,197,94,0.05);
+      border: 1px solid rgba(34,197,94,0.15);
+    }
+    .wizard-step.pending {
+      background: rgba(42,42,50,0.4);
+      border: 1px solid transparent;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+
+    /* ── Scroll reveal ── */
+    .reveal {
       opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
     }
-    .fade-up.visible {
+    .reveal.in-view {
       opacity: 1;
       transform: translateY(0);
     }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
 
-    /* Mobile menu */
-    #mobile-menu { transition: max-height 0.3s ease, opacity 0.3s ease; }
+    /* ── Scroll indicator ── */
+    @keyframes scrollBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.5; }
+      50%       { transform: translateY(8px); opacity: 1; }
+    }
+    .scroll-indicator { animation: scrollBounce 2s ease-in-out infinite; }
+
+    /* ── Timeline dots ── */
+    .timeline-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid #F97316;
+      background: #0A0A0B;
+      flex-shrink: 0;
+    }
+    .timeline-dot.active { background: #F97316; box-shadow: 0 0 12px rgba(249,115,22,0.6); }
+
+    /* ── Orange glow download ── */
+    .download-glow {
+      position: absolute;
+      inset: -100px; z-index: 0;
+      background: radial-gradient(ellipse at 50% 60%, rgba(249,115,22,0.15) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* ── Mobile nav ── */
+    #mobile-menu { display: none; }
+    #mobile-menu.open { display: flex; }
+
+    /* ── LLM pill ── */
+    .llm-pill {
+      background: #1A1A1F;
+      border: 1px solid #2A2A32;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #F97316;
+      font-weight: 500;
+      transition: border-color 0.2s;
+    }
+    .llm-pill:hover { border-color: #F97316; }
+
+    /* ── Grid responsive helpers ── */
+    @media (max-width: 768px) {
+      .hero-glow { width: 400px; height: 400px; }
+      .feat-alt { flex-direction: column !important; }
+    }
+
+    /* ── Cursor blink ── */
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .cursor { animation: blink 1s step-end infinite; color: #F97316; }
+
+    /* ── Star badge ── */
+    .star-badge {
+      position: absolute; top: -10px; right: 12px;
+      background: #F97316; color: #0A0A0B;
+      font-size: 10px; font-weight: 800;
+      padding: 2px 8px; border-radius: 99px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Section divider ── */
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #2A2A32 30%, #2A2A32 70%, transparent);
+    }
   </style>
 </head>
+<body>
 
-<body class="antialiased">
+<!-- ══════════════════════════════════════════ -->
+<!--  1. STICKY NAV                             -->
+<!-- ══════════════════════════════════════════ -->
+<nav id="main-nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
 
-  <!-- ============================================================
-       NAV
-  ============================================================ -->
-  <nav class="nav-glass fixed top-0 left-0 right-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="flex items-center justify-between h-16">
-        <!-- Logo -->
-        <a href="#" class="flex items-center">
-          <img
-            src="https://api.dracattus.com/v1/files/koba42/5b08ccf263df2102b7f6b0c9fe19cb5e_opentang-logo-w-text.png"
-            alt="OpenTang"
-            class="logo-img h-8 w-auto"
-          />
-        </a>
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2.5 flex-shrink-0">
+      <img src="https://api.dracattus.com/v1/files/koba42/7aa3f80c1d48124b659ee1c7908d0920_logo-no-text.png"
+           alt="OpenTang mark" class="h-8 w-auto" />
+      <span class="font-bold text-lg tracking-tight text-white">OpenTang</span>
+    </a>
 
-        <!-- Desktop nav -->
-        <div class="hidden md:flex items-center gap-6">
-          <a href="#what" class="text-sm text-[#8B8B9A] hover:text-white transition-colors">About</a>
-          <a href="#stack" class="text-sm text-[#8B8B9A] hover:text-white transition-colors">Stack</a>
-          <a href="#how" class="text-sm text-[#8B8B9A] hover:text-white transition-colors">How it works</a>
-          <a href="#download" class="text-sm text-[#8B8B9A] hover:text-white transition-colors">Download</a>
-          <a
-            href="https://github.com/Koba42Corp/opentang"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center gap-1.5 text-sm text-[#8B8B9A] hover:text-white transition-colors"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-            GitHub
-          </a>
-          <a
-            href="https://github.com/Koba42Corp/opentang/releases/latest"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-orange px-4 py-2 text-sm"
-          >
-            Download
-          </a>
-        </div>
-
-        <!-- Mobile hamburger -->
-        <button
-          id="nav-toggle"
-          class="md:hidden flex flex-col gap-1.5 p-2"
-          aria-label="Toggle menu"
-        >
-          <span class="block w-5 h-0.5 bg-white transition-all"></span>
-          <span class="block w-5 h-0.5 bg-white transition-all"></span>
-          <span class="block w-5 h-0.5 bg-white transition-all"></span>
-        </button>
-      </div>
+    <!-- Desktop links -->
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-muted">
+      <a href="https://github.com/Koba42Corp/opentang" target="_blank" rel="noopener"
+         class="hover:text-white transition-colors flex items-center gap-1.5">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+      <a href="#docs" class="hover:text-white transition-colors">Docs</a>
+      <a href="#download" class="hover:text-white transition-colors">Download</a>
     </div>
 
-    <!-- Mobile menu -->
-    <div id="mobile-menu" class="md:hidden hidden border-t border-[#2A2A32]">
-      <div class="px-4 py-4 flex flex-col gap-4">
-        <a href="#what" class="text-sm text-[#8B8B9A] hover:text-white">About</a>
-        <a href="#stack" class="text-sm text-[#8B8B9A] hover:text-white">Stack</a>
-        <a href="#how" class="text-sm text-[#8B8B9A] hover:text-white">How it works</a>
-        <a href="#download" class="text-sm text-[#8B8B9A] hover:text-white">Download</a>
-        <a href="https://github.com/Koba42Corp/opentang" target="_blank" class="text-sm text-[#8B8B9A] hover:text-white">GitHub</a>
-        <a
-          href="https://github.com/Koba42Corp/opentang/releases/latest"
-          target="_blank"
-          class="btn-orange px-4 py-2 text-sm text-center"
-        >
-          Download
-        </a>
+    <!-- CTA -->
+    <div class="hidden md:flex items-center gap-3">
+      <a href="https://github.com/Koba42Corp/opentang/releases/latest" target="_blank" rel="noopener"
+         class="btn-orange px-5 py-2 text-sm inline-flex items-center gap-1.5">
+        Download Free
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+      </a>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button id="hamburger" class="md:hidden p-2 rounded-lg text-muted hover:text-white" aria-label="Toggle menu">
+      <svg id="ham-icon" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="flex-col md:hidden px-6 pb-5 pt-2 gap-4 border-t border-[#2A2A32] bg-[#0A0A0B]">
+    <a href="https://github.com/Koba42Corp/opentang" target="_blank" rel="noopener"
+       class="text-muted hover:text-white transition-colors py-2 text-sm font-medium flex items-center gap-2">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+    <a href="#docs" class="text-muted hover:text-white transition-colors py-2 text-sm font-medium">Docs / Legal</a>
+    <a href="#download" class="text-muted hover:text-white transition-colors py-2 text-sm font-medium">Download</a>
+    <a href="https://github.com/Koba42Corp/opentang/releases/latest" target="_blank" rel="noopener"
+       class="btn-orange px-5 py-2.5 text-sm text-center font-bold inline-flex items-center justify-center gap-2">
+      Download Free
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+    </a>
+  </div>
+</nav>
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  2. HERO                                   -->
+<!-- ══════════════════════════════════════════ -->
+<section class="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24 pb-16 overflow-hidden">
+  <div class="hero-glow"></div>
+
+  <!-- Eyebrow -->
+  <div class="reveal inline-flex items-center gap-2 bg-[#1A1A1F] border border-[#2A2A32] rounded-full px-4 py-1.5 text-xs font-semibold text-muted uppercase tracking-widest mb-8">
+    <span class="w-2 h-2 rounded-full bg-[#F97316] animate-pulse-slow"></span>
+    Open Source · Self-Hosted · Free Forever
+  </div>
+
+  <!-- Headline -->
+  <h1 class="reveal reveal-delay-1 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[1.02] tracking-tight max-w-4xl mb-6">
+    Stop renting.<br/>
+    <span class="grad-text">Start owning.</span>
+  </h1>
+
+  <!-- Subheadline -->
+  <p class="reveal reveal-delay-2 text-lg sm:text-xl text-muted max-w-2xl leading-relaxed mb-10">
+    OpenTang gives you a complete self-hosted AI&nbsp;+&nbsp;developer stack —
+    installed, secured, and running on <strong class="text-white">YOUR machine</strong> in under 10&nbsp;minutes.
+  </p>
+
+  <!-- CTAs -->
+  <div class="reveal reveal-delay-3 flex flex-col sm:flex-row items-center gap-4 mb-8">
+    <a href="https://github.com/Koba42Corp/opentang/releases/latest" target="_blank" rel="noopener"
+       class="btn-orange px-8 py-4 text-base flex items-center gap-2">
+      Download Free
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </a>
+    <a href="https://github.com/Koba42Corp/opentang" target="_blank" rel="noopener"
+       class="btn-ghost px-8 py-4 text-base flex items-center gap-2">
+      View on GitHub
+      <svg class="w-4 h-4 opacity-60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+      </svg>
+    </a>
+  </div>
+
+  <!-- Platform row -->
+  <div class="reveal reveal-delay-4 flex items-center gap-4 text-sm text-muted mb-12">
+    <span class="flex items-center gap-1.5"><span class="text-base">🐧</span> Linux</span>
+    <span class="w-1 h-1 rounded-full bg-[#2A2A32]"></span>
+    <span class="flex items-center gap-1.5"><span class="text-base">🍎</span> macOS</span>
+    <span class="w-1 h-1 rounded-full bg-[#2A2A32]"></span>
+    <span class="flex items-center gap-1.5"><span class="text-base">🪟</span> Windows</span>
+  </div>
+
+  <!-- Terminal card -->
+  <div class="reveal w-full max-w-2xl terminal shadow-2xl" id="hero-terminal">
+    <div class="terminal-bar">
+      <span class="t-dot bg-[#FF5F57]"></span>
+      <span class="t-dot bg-[#FEBC2E]"></span>
+      <span class="t-dot bg-[#28C840]"></span>
+      <span class="ml-3 text-xs text-muted font-mono">opentang — install</span>
+    </div>
+    <div class="p-5 text-left space-y-0.5" id="terminal-content">
+      <div class="terminal-line text-muted">$ opentang install</div>
+      <div class="terminal-line"><span class="text-[#F97316]">→</span> <span class="text-white">Checking system requirements</span> <span class="text-green-400">✓</span></div>
+      <div class="terminal-line"><span class="text-[#F97316]">→</span> <span class="text-white">Docker detected</span> <span class="text-green-400">✓</span></div>
+      <div class="terminal-line"><span class="text-[#F97316]">→</span> <span class="text-white">Generating secrets vault</span> <span class="text-green-400">✓</span></div>
+      <div class="terminal-line"><span class="text-[#F97316]">→</span> <span class="text-white">Configuring Traefik + SSL</span> <span class="text-green-400">✓</span></div>
+      <div class="terminal-line"><span class="text-[#F97316]">→</span> <span class="text-white">Pulling service images</span> <span class="text-[#FBBF24]">...</span></div>
+      <div class="terminal-line"><span class="text-[#F97316]">→</span> <span class="text-white">Starting Ollama</span> <span class="text-green-400">✓</span></div>
+      <div class="terminal-line"><span class="text-[#F97316]">→</span> <span class="text-white">Starting OpenClaw</span> <span class="text-green-400">✓</span></div>
+      <div class="terminal-line"><span class="text-[#F97316]">→</span> <span class="text-white">Starting Coolify</span> <span class="text-green-400">✓</span></div>
+      <div class="terminal-line">
+        <span class="text-green-400 font-semibold">✓ Stack running.</span>
+        <span class="text-muted"> Open </span>
+        <span class="text-[#F97316]">http://localhost:8080</span>
+        <span class="cursor">▌</span>
       </div>
     </div>
-  </nav>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="scroll-indicator absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted text-xs">
+    <span class="tracking-widest uppercase text-[10px]">Scroll</span>
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </div>
+</section>
 
 
-  <!-- ============================================================
-       HERO
-  ============================================================ -->
-  <section class="hero-bg grid-bg pt-32 pb-24 px-4 sm:px-6 relative overflow-hidden">
-    <!-- Decorative glow orb -->
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full pointer-events-none"
-         style="background: radial-gradient(ellipse, rgba(249,115,22,0.15) 0%, transparent 70%); filter: blur(40px);"></div>
-
-    <div class="max-w-6xl mx-auto relative">
-      <div class="text-center mb-16">
-        <!-- Pill tag -->
-        <div class="inline-flex items-center gap-2 bg-[#111114] border border-[#2A2A32] rounded-full px-4 py-1.5 text-sm text-[#8B8B9A] mb-8">
-          <span class="w-2 h-2 rounded-full bg-[#F97316] animate-pulse"></span>
-          Open Source · Self-Hosted · Free Forever
-        </div>
-
-        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-none mb-6">
-          Your stack.<br/>
-          <span class="text-[#F97316]">Your rules.</span>
-        </h1>
-
-        <p class="text-lg sm:text-xl text-[#8B8B9A] max-w-2xl mx-auto leading-relaxed mb-10">
-          The open-source self-hosted AI + developer environment bootstrapper.<br class="hidden sm:inline"/>
-          Set up Coolify, OpenClaw, Gitea, Grafana and more — in minutes, not days.
-        </p>
-
-        <!-- CTAs -->
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-          <a
-            href="https://github.com/Koba42Corp/opentang/releases/latest"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-orange px-8 py-3.5 text-base inline-flex items-center justify-center gap-2"
-          >
-            Download for Free
-            <span class="text-lg">→</span>
-          </a>
-          <a
-            href="https://github.com/Koba42Corp/opentang"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-ghost px-8 py-3.5 text-base inline-flex items-center justify-center gap-2"
-          >
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-            View on GitHub
-          </a>
-        </div>
-
-        <!-- Platform badges -->
-        <div class="flex flex-wrap gap-3 justify-center text-sm text-[#8B8B9A]">
-          <span class="flex items-center gap-1.5 bg-[#111114] border border-[#2A2A32] rounded-full px-3 py-1">
-            🐧 <span>Linux</span>
-          </span>
-          <span class="flex items-center gap-1.5 bg-[#111114] border border-[#2A2A32] rounded-full px-3 py-1">
-            🍎 <span>macOS</span>
-          </span>
-          <span class="flex items-center gap-1.5 bg-[#111114] border border-[#2A2A32] rounded-full px-3 py-1">
-            🪟 <span>Windows</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- Terminal mockup -->
-      <div class="max-w-2xl mx-auto">
-        <div class="terminal-card">
-          <!-- Title bar -->
-          <div class="terminal-titlebar">
-            <div class="terminal-dot bg-[#FF5F57]"></div>
-            <div class="terminal-dot bg-[#FFBD2E]"></div>
-            <div class="terminal-dot bg-[#28C840]"></div>
-            <span class="ml-3 text-xs text-[#8B8B9A] font-mono">opentang — install</span>
-          </div>
-
-          <!-- Terminal body -->
-          <div class="p-6 font-mono text-sm space-y-3 min-h-[220px]">
-            <div class="text-[#F97316] font-bold">OpenTang v0.1.0</div>
-            <div class="text-[#8B8B9A]">─────────────────────────────────────</div>
-
-            <div class="flex items-center gap-2">
-              <span class="text-green-400">✓</span>
-              <span class="text-[#8B8B9A]">System check</span>
-              <span class="text-green-400 text-xs ml-auto">PASS</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-green-400">✓</span>
-              <span class="text-[#8B8B9A]">Docker detected</span>
-              <span class="text-green-400 text-xs ml-auto">v26.1.4</span>
-            </div>
-
-            <div class="text-[#8B8B9A] mt-2">Installing <span class="text-white">Coolify</span>...</div>
-            <div class="w-full bg-[#1A1A1F] rounded h-1.5 mt-1">
-              <div class="progress-bar h-1.5"></div>
-            </div>
-
-            <div class="flex items-center gap-2 mt-2">
-              <span class="text-[#F97316]">▶</span>
-              <span class="text-white">Installing <span class="text-[#F97316]">Ollama</span></span>
-              <span class="cursor text-[#8B8B9A] text-xs ml-auto">pulling model</span>
-            </div>
-
-            <div class="text-[#8B8B9A] text-xs pt-2 border-t border-[#2A2A32]">
-              Packages: coolify gitea grafana ollama  •  ETA ~3 min
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<!-- ══════════════════════════════════════════ -->
+<!--  3. SOCIAL PROOF BAR                       -->
+<!-- ══════════════════════════════════════════ -->
+<div class="relative bg-[#111114] border-y border-[#2A2A32] py-5">
+  <div class="max-w-5xl mx-auto px-6 flex flex-wrap justify-center items-center gap-x-2 gap-y-2 text-sm font-semibold tracking-wide text-muted select-none">
+    <span>Open source</span>
+    <span class="sep-dot"></span>
+    <span>Apache 2.0</span>
+    <span class="sep-dot"></span>
+    <span>Built for builders</span>
+    <span class="sep-dot"></span>
+    <span>Self-hosted forever</span>
+    <span class="sep-dot"></span>
+    <span>No telemetry</span>
+    <span class="sep-dot"></span>
+    <span>Zero lock-in</span>
+  </div>
+</div>
 
 
-  <!-- ============================================================
-       WHAT IS OPENTANG?
-  ============================================================ -->
-  <section id="what" class="py-24 px-4 sm:px-6 bg-[#0A0A0B]">
-    <div class="max-w-6xl mx-auto">
-      <div class="fade-up mb-4">
-        <span class="section-tag">What is OpenTang?</span>
-      </div>
-      <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+<!-- ══════════════════════════════════════════ -->
+<!--  4. THE PROBLEM                            -->
+<!-- ══════════════════════════════════════════ -->
+<section class="relative py-28 px-6 overflow-hidden">
+  <div class="section-glow" style="top:-100px;left:-100px;"></div>
+  <div class="max-w-6xl mx-auto">
 
-        <!-- Left: description -->
-        <div class="fade-up">
-          <h2 class="text-3xl sm:text-4xl font-bold text-white leading-tight mb-6">
-            Think Homebrew meets Docker&nbsp;Desktop meets an AI-native App Store.
-          </h2>
-          <p class="text-[#8B8B9A] text-lg leading-relaxed mb-6">
-            OpenTang is a desktop GUI app that guides you through bootstrapping a complete
-            self-hosted developer environment — from system checks and Docker setup all the way
-            to deploying production-grade services on your own hardware.
-          </p>
-          <p class="text-[#8B8B9A] text-lg leading-relaxed mb-8">
-            No SSH tunnels. No YAML nightmares. No cloud lock-in. Just click, configure, and run.
-            Your data stays yours.
-          </p>
-          <a
-            href="https://github.com/Koba42Corp/opentang"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-ghost px-6 py-3 text-sm inline-flex items-center gap-2"
-          >
-            Read the docs on GitHub →
-          </a>
-        </div>
-
-        <!-- Right: feature list -->
-        <div class="fade-up">
-          <div class="bg-[#111114] border border-[#2A2A32] rounded-xl p-6 space-y-4">
-            <h3 class="text-white font-semibold text-sm uppercase tracking-wider mb-4 text-[#8B8B9A]">Everything you need</h3>
-            <ul class="space-y-3.5">
-              <li class="flex items-center gap-3">
-                <span class="feature-check text-lg">✓</span>
-                <span class="text-white font-medium">Step-by-step setup wizard</span>
-              </li>
-              <li class="flex items-center gap-3">
-                <span class="feature-check text-lg">✓</span>
-                <div>
-                  <span class="text-white font-medium">AI-first</span>
-                  <span class="text-[#8B8B9A] text-sm ml-2">Ollama, OpenClaw, Hermes</span>
-                </div>
-              </li>
-              <li class="flex items-center gap-3">
-                <span class="feature-check text-lg">✓</span>
-                <span class="text-white font-medium">Docker-powered deployments</span>
-              </li>
-              <li class="flex items-center gap-3">
-                <span class="feature-check text-lg">✓</span>
-                <div>
-                  <span class="text-white font-medium">Secure by default</span>
-                  <span class="text-[#8B8B9A] text-sm ml-2">TLS, secrets, isolation</span>
-                </div>
-              </li>
-              <li class="flex items-center gap-3">
-                <span class="feature-check text-lg">✓</span>
-                <div>
-                  <span class="text-white font-medium">App Store</span>
-                  <span class="text-[#8B8B9A] text-sm ml-2">install &amp; remove packages</span>
-                </div>
-              </li>
-              <li class="flex items-center gap-3">
-                <span class="feature-check text-lg">✓</span>
-                <div>
-                  <span class="text-white font-medium">Flexible networking</span>
-                  <span class="text-[#8B8B9A] text-sm ml-2">local, LAN, or internet-facing</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Sub stats row -->
-          <div class="grid grid-cols-3 gap-4 mt-4">
-            <div class="bg-[#111114] border border-[#2A2A32] rounded-xl p-4 text-center">
-              <div class="text-[#F97316] text-2xl font-black">10+</div>
-              <div class="text-[#8B8B9A] text-xs mt-1">Packages</div>
-            </div>
-            <div class="bg-[#111114] border border-[#2A2A32] rounded-xl p-4 text-center">
-              <div class="text-[#F97316] text-2xl font-black">3</div>
-              <div class="text-[#8B8B9A] text-xs mt-1">Platforms</div>
-            </div>
-            <div class="bg-[#111114] border border-[#2A2A32] rounded-xl p-4 text-center">
-              <div class="text-[#F97316] text-2xl font-black">0</div>
-              <div class="text-[#8B8B9A] text-xs mt-1">Cloud deps</div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ============================================================
-       THE STACK
-  ============================================================ -->
-  <section id="stack" class="py-24 px-4 sm:px-6 bg-[#080809]">
-    <div class="max-w-6xl mx-auto">
-      <div class="fade-up text-center mb-12">
-        <span class="section-tag">The Stack</span>
-        <h2 class="text-3xl sm:text-4xl font-bold text-white mt-3 mb-4">
-          Best-in-class open source tools.<br/>
-          <span class="text-[#8B8B9A] font-normal">One installer to rule them all.</span>
-        </h2>
-        <p class="text-[#8B8B9A] max-w-xl mx-auto">
-          Every package is pre-configured, Docker-ready, and deployable with a single click.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 fade-up">
-
-        <!-- Coolify -->
-        <div class="pkg-card p-5 col-span-1">
-          <div class="text-3xl mb-3">🚀</div>
-          <div class="flex items-start justify-between gap-2 mb-2">
-            <span class="text-white font-semibold">Coolify</span>
-            <span class="badge-featured shrink-0">Koba42</span>
-          </div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Self-hosted Heroku + Netlify alternative. Deploy anything.</p>
-        </div>
-
-        <!-- OpenClaw -->
-        <div class="pkg-card p-5 col-span-1">
-          <div class="text-3xl mb-3">🦾</div>
-          <div class="flex items-start justify-between gap-2 mb-2">
-            <span class="text-white font-semibold">OpenClaw</span>
-            <span class="badge-featured shrink-0">Koba42</span>
-          </div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">AI-native agent interface and local model manager.</p>
-        </div>
-
-        <!-- Ollama -->
-        <div class="pkg-card p-5">
-          <div class="text-3xl mb-3">🦙</div>
-          <div class="text-white font-semibold mb-2">Ollama</div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Run LLMs locally. Llama, Mistral, Gemma and more.</p>
-        </div>
-
-        <!-- Gitea -->
-        <div class="pkg-card p-5">
-          <div class="text-3xl mb-3">🍵</div>
-          <div class="text-white font-semibold mb-2">Gitea</div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Lightweight self-hosted Git service. Your own GitHub.</p>
-        </div>
-
-        <!-- Portainer -->
-        <div class="pkg-card p-5">
-          <div class="text-3xl mb-3">🐳</div>
-          <div class="text-white font-semibold mb-2">Portainer</div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Visual Docker &amp; Kubernetes container management UI.</p>
-        </div>
-
-        <!-- Grafana -->
-        <div class="pkg-card p-5">
-          <div class="text-3xl mb-3">📊</div>
-          <div class="text-white font-semibold mb-2">Grafana</div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Observability dashboards for metrics, logs, and traces.</p>
-        </div>
-
-        <!-- n8n -->
-        <div class="pkg-card p-5">
-          <div class="text-3xl mb-3">🔗</div>
-          <div class="text-white font-semibold mb-2">n8n</div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Self-hosted workflow automation. Your own Zapier.</p>
-        </div>
-
-        <!-- Vaultwarden -->
-        <div class="pkg-card p-5">
-          <div class="text-3xl mb-3">🔐</div>
-          <div class="text-white font-semibold mb-2">Vaultwarden</div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Bitwarden-compatible password manager server.</p>
-        </div>
-
-        <!-- Nextcloud -->
-        <div class="pkg-card p-5">
-          <div class="text-3xl mb-3">☁️</div>
-          <div class="text-white font-semibold mb-2">Nextcloud</div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Self-hosted file sync and collaboration platform.</p>
-        </div>
-
-        <!-- Uptime Kuma -->
-        <div class="pkg-card p-5">
-          <div class="text-3xl mb-3">💓</div>
-          <div class="text-white font-semibold mb-2">Uptime Kuma</div>
-          <p class="text-[#8B8B9A] text-xs leading-relaxed">Beautiful self-hosted monitoring and status pages.</p>
-        </div>
-
-      </div>
-
-      <p class="text-center text-[#8B8B9A] text-sm mt-8 fade-up">
-        More packages coming soon · <a href="https://github.com/Koba42Corp/opentang" class="text-[#F97316] hover:underline">suggest one →</a>
-      </p>
-    </div>
-  </section>
-
-
-  <!-- ============================================================
-       HOW IT WORKS
-  ============================================================ -->
-  <section id="how" class="py-24 px-4 sm:px-6 bg-[#0A0A0B]">
-    <div class="max-w-6xl mx-auto">
-      <div class="fade-up text-center mb-16">
-        <span class="section-tag">How It Works</span>
-        <h2 class="text-3xl sm:text-4xl font-bold text-white mt-3 mb-4">
-          From zero to running in three steps.
-        </h2>
-        <p class="text-[#8B8B9A] max-w-lg mx-auto">
-          No terminal required. No Docker Compose files to write. Just point and click.
-        </p>
-      </div>
-
-      <!-- Steps -->
-      <div class="relative fade-up">
-        <!-- Desktop layout -->
-        <div class="hidden md:grid grid-cols-3 gap-8">
-          <!-- Connector lines between steps -->
-          <div class="absolute top-6 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-[#F97316] via-[rgba(249,115,22,0.4)] to-[#F97316] pointer-events-none" style="margin-left: 60px; margin-right: 60px;"></div>
-
-          <!-- Step 1 -->
-          <div class="flex flex-col items-center text-center px-4">
-            <div class="step-num mb-6 relative z-10">1</div>
-            <div class="bg-[#111114] border border-[#2A2A32] rounded-xl p-6 w-full">
-              <div class="text-3xl mb-3">⬇️</div>
-              <h3 class="text-white font-bold text-lg mb-2">Download OpenTang</h3>
-              <p class="text-[#8B8B9A] text-sm leading-relaxed">
-                Grab the installer for your platform — Linux, macOS, or Windows. No prerequisites needed.
-              </p>
-            </div>
-          </div>
-
-          <!-- Step 2 -->
-          <div class="flex flex-col items-center text-center px-4">
-            <div class="step-num mb-6 relative z-10">2</div>
-            <div class="bg-[#111114] border border-[#2A2A32] rounded-xl p-6 w-full">
-              <div class="text-3xl mb-3">🎛️</div>
-              <h3 class="text-white font-bold text-lg mb-2">Choose your stack</h3>
-              <p class="text-[#8B8B9A] text-sm leading-relaxed">
-                Browse the App Store, pick the tools you need, and configure domains and settings.
-              </p>
-            </div>
-          </div>
-
-          <!-- Step 3 -->
-          <div class="flex flex-col items-center text-center px-4">
-            <div class="step-num mb-6 relative z-10">3</div>
-            <div class="bg-[#111114] border border-[#2A2A32] rounded-xl p-6 w-full">
-              <div class="text-3xl mb-3">🚀</div>
-              <h3 class="text-white font-bold text-lg mb-2">Click Install</h3>
-              <p class="text-[#8B8B9A] text-sm leading-relaxed">
-                OpenTang handles Docker setup, pulls images, and launches everything. Watch it go.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mobile: vertical steps -->
-        <div class="md:hidden space-y-4">
-          <div class="flex gap-4 items-start bg-[#111114] border border-[#2A2A32] rounded-xl p-5">
-            <div class="step-num">1</div>
-            <div>
-              <h3 class="text-white font-bold mb-1">Download OpenTang</h3>
-              <p class="text-[#8B8B9A] text-sm">Grab the installer for your platform — no prerequisites needed.</p>
-            </div>
-          </div>
-          <div class="flex gap-4 items-start bg-[#111114] border border-[#2A2A32] rounded-xl p-5">
-            <div class="step-num">2</div>
-            <div>
-              <h3 class="text-white font-bold mb-1">Choose your stack</h3>
-              <p class="text-[#8B8B9A] text-sm">Browse packages, pick what you need, configure your settings.</p>
-            </div>
-          </div>
-          <div class="flex gap-4 items-start bg-[#111114] border border-[#2A2A32] rounded-xl p-5">
-            <div class="step-num">3</div>
-            <div>
-              <h3 class="text-white font-bold mb-1">Click Install</h3>
-              <p class="text-[#8B8B9A] text-sm">OpenTang handles everything. Watch your stack spin up in minutes.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ============================================================
-       DOWNLOAD
-  ============================================================ -->
-  <section id="download" class="py-24 px-4 sm:px-6"
-    style="background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(249,115,22,0.1) 0%, transparent 70%), #080809;">
-    <div class="max-w-6xl mx-auto">
-      <div class="fade-up text-center mb-12">
-        <span class="section-tag">Download</span>
-        <h2 class="text-4xl sm:text-5xl font-black text-white mt-3 mb-4">
-          Get started in minutes.
-        </h2>
-        <p class="text-[#8B8B9A] text-lg max-w-lg mx-auto">
-          Free, open source, and always will be. Pick your platform below.
-        </p>
-      </div>
-
-      <!-- Platform cards -->
-      <div class="grid md:grid-cols-3 gap-6 mb-10 fade-up">
-
-        <!-- Linux -->
-        <a
-          href="https://github.com/Koba42Corp/opentang/releases/latest"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="dl-card p-6 block group"
-        >
-          <div class="text-4xl mb-4">🐧</div>
-          <h3 class="text-white font-bold text-xl mb-1">Linux</h3>
-          <div class="text-[#8B8B9A] text-sm mb-4">.AppImage · .deb</div>
-          <div class="text-xs text-[#8B8B9A] bg-[#0A0A0B] rounded-lg px-3 py-2 font-mono mb-5">
-            opentang_0.1.0_amd64.AppImage
-          </div>
-          <div class="btn-orange px-5 py-2.5 text-sm inline-flex items-center gap-2 group-hover:gap-3 transition-all">
-            Download for Linux →
-          </div>
-        </a>
-
-        <!-- macOS -->
-        <a
-          href="https://github.com/Koba42Corp/opentang/releases/latest"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="dl-card p-6 block group"
-          style="border-color: rgba(249,115,22,0.5); box-shadow: 0 0 40px rgba(249,115,22,0.12);"
-        >
-          <div class="text-4xl mb-4">🍎</div>
-          <h3 class="text-white font-bold text-xl mb-1">macOS</h3>
-          <div class="text-[#8B8B9A] text-sm mb-4">.dmg — Intel + Apple Silicon</div>
-          <div class="text-xs text-[#8B8B9A] bg-[#0A0A0B] rounded-lg px-3 py-2 font-mono mb-5">
-            OpenTang_0.1.0_universal.dmg
-          </div>
-          <div class="btn-orange px-5 py-2.5 text-sm inline-flex items-center gap-2 group-hover:gap-3 transition-all">
-            Download for macOS →
-          </div>
-        </a>
-
-        <!-- Windows -->
-        <a
-          href="https://github.com/Koba42Corp/opentang/releases/latest"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="dl-card p-6 block group"
-        >
-          <div class="text-4xl mb-4">🪟</div>
-          <h3 class="text-white font-bold text-xl mb-1">Windows</h3>
-          <div class="text-[#8B8B9A] text-sm mb-4">.msi · .exe</div>
-          <div class="text-xs text-[#8B8B9A] bg-[#0A0A0B] rounded-lg px-3 py-2 font-mono mb-5">
-            OpenTang_0.1.0_x64.msi
-          </div>
-          <div class="btn-orange px-5 py-2.5 text-sm inline-flex items-center gap-2 group-hover:gap-3 transition-all">
-            Download for Windows →
-          </div>
-        </a>
-
-      </div>
-
-      <!-- Notes -->
-      <div class="fade-up grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto text-sm text-[#8B8B9A]">
-        <div class="flex items-start gap-2 bg-[#111114] border border-[#2A2A32] rounded-lg px-4 py-3">
-          <span class="text-yellow-400 mt-0.5 shrink-0">⚠️</span>
-          <span><strong class="text-white">macOS:</strong> if blocked by Gatekeeper, right-click the app → Open</span>
-        </div>
-        <div class="flex items-start gap-2 bg-[#111114] border border-[#2A2A32] rounded-lg px-4 py-3">
-          <span class="text-blue-400 mt-0.5 shrink-0">🐳</span>
-          <span><strong class="text-white">Docker required</strong> — or OpenTang installs it for you on Linux</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ============================================================
-       OPEN SOURCE
-  ============================================================ -->
-  <section id="oss" class="py-24 px-4 sm:px-6 bg-[#0A0A0B]">
-    <div class="max-w-4xl mx-auto text-center fade-up">
-      <span class="section-tag">Open Source</span>
-      <h2 class="text-3xl sm:text-4xl font-bold text-white mt-3 mb-4">
-        Built in the open. For the community.
+    <div class="reveal text-center mb-16">
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-4">The Problem</p>
+      <h2 class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight">
+        Setting up a dev stack<br class="hidden sm:block"/>
+        <span class="text-muted">shouldn't take 3 days.</span>
       </h2>
-      <p class="text-[#8B8B9A] text-lg max-w-2xl mx-auto mb-10">
-        OpenTang is Apache 2.0 licensed. Fork it, modify it, ship it. No vendor lock-in,
-        no telemetry by default, no strings attached.
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+
+      <!-- Pain -->
+      <div class="reveal reveal-delay-1 feat-card p-6 flex flex-col gap-4">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-2xl">😤</span>
+          <h3 class="font-bold text-lg text-red-400">Without OpenTang</h3>
+        </div>
+        <div class="flex flex-col gap-3">
+          <div class="pain-item">
+            <span class="text-red-400 text-lg flex-shrink-0">✗</span>
+            <span>Configuring Docker Compose by hand</span>
+          </div>
+          <div class="pain-item">
+            <span class="text-red-400 text-lg flex-shrink-0">✗</span>
+            <span>Hunting down the right env variables</span>
+          </div>
+          <div class="pain-item">
+            <span class="text-red-400 text-lg flex-shrink-0">✗</span>
+            <span>SSL certs that expire without warning</span>
+          </div>
+          <div class="pain-item">
+            <span class="text-red-400 text-lg flex-shrink-0">✗</span>
+            <span>Services that conflict on ports</span>
+          </div>
+          <div class="pain-item">
+            <span class="text-red-400 text-lg flex-shrink-0">✗</span>
+            <span>Starting over after a server wipe</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solution -->
+      <div class="reveal reveal-delay-2 feat-card p-6 flex flex-col gap-4" style="border-color:rgba(249,115,22,0.25);">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-2xl">🚀</span>
+          <h3 class="font-bold text-lg text-[#F97316]">With OpenTang</h3>
+        </div>
+        <div class="flex flex-col gap-3">
+          <div class="win-item">
+            <span class="text-[#F97316] text-lg flex-shrink-0">✓</span>
+            <span>Guided wizard. Zero YAML required.</span>
+          </div>
+          <div class="win-item">
+            <span class="text-[#F97316] text-lg flex-shrink-0">✓</span>
+            <span>Auto-generated secrets vault</span>
+          </div>
+          <div class="win-item">
+            <span class="text-[#F97316] text-lg flex-shrink-0">✓</span>
+            <span>Traefik + Let's Encrypt auto-SSL</span>
+          </div>
+          <div class="win-item">
+            <span class="text-[#F97316] text-lg flex-shrink-0">✓</span>
+            <span>Smart port conflict detection</span>
+          </div>
+          <div class="win-item">
+            <span class="text-[#F97316] text-lg flex-shrink-0">✓</span>
+            <span>One-click reinstall from saved state</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider max-w-5xl mx-auto"></div>
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  5. FEATURES                               -->
+<!-- ══════════════════════════════════════════ -->
+
+<!-- Feature 1: Wizard -->
+<section class="relative py-28 px-6 overflow-hidden">
+  <div class="section-glow" style="top:0;right:-200px;"></div>
+  <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-16 feat-alt">
+
+    <!-- Text -->
+    <div class="flex-1 reveal">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-3xl mb-8" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.25);">
+        🧙
+      </div>
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-3">The Wizard</p>
+      <h2 class="text-4xl sm:text-5xl font-black tracking-tight leading-tight mb-6">
+        A wizard so good<br/>you forget it's<br/>
+        <span class="grad-text">infrastructure.</span>
+      </h2>
+      <p class="text-[#8B8B9A] text-lg leading-relaxed max-w-lg">
+        Step-by-step setup that actually makes sense. Pick your AI model, choose your services, set your network mode. OpenTang handles the rest — Docker Compose, SSL, secrets, and all.
+      </p>
+    </div>
+
+    <!-- Wizard mock -->
+    <div class="flex-1 reveal reveal-delay-2 w-full max-w-sm lg:max-w-md">
+      <div class="feat-card p-6" style="border-color:rgba(249,115,22,0.25);">
+        <div class="text-xs font-bold uppercase tracking-widest text-muted mb-5">OpenTang Setup Wizard</div>
+        <div class="flex flex-col gap-2">
+          <div class="wizard-step done">
+            <div class="step-num bg-green-500 text-[#0A0A0B]">✓</div>
+            <div>
+              <div class="text-sm font-semibold text-green-400">System check</div>
+              <div class="text-xs text-muted">Docker 24.0.5 · 16 GB RAM</div>
+            </div>
+          </div>
+          <div class="wizard-step done">
+            <div class="step-num bg-green-500 text-[#0A0A0B]">✓</div>
+            <div>
+              <div class="text-sm font-semibold text-green-400">Network mode</div>
+              <div class="text-xs text-muted">Local · Traefik disabled</div>
+            </div>
+          </div>
+          <div class="wizard-step active">
+            <div class="step-num bg-[#F97316] text-[#0A0A0B]">3</div>
+            <div>
+              <div class="text-sm font-semibold text-[#F97316]">Choose your AI</div>
+              <div class="text-xs text-muted flex gap-2 mt-1 flex-wrap">
+                <span class="llm-pill py-0.5 px-2 text-xs">Ollama</span>
+                <span class="llm-pill py-0.5 px-2 text-xs opacity-50">OpenAI</span>
+                <span class="llm-pill py-0.5 px-2 text-xs opacity-50">Anthropic</span>
+              </div>
+            </div>
+          </div>
+          <div class="wizard-step pending">
+            <div class="step-num bg-[#2A2A32] text-muted">4</div>
+            <div>
+              <div class="text-sm font-medium text-muted">Select services</div>
+              <div class="text-xs text-muted opacity-60">Coolify, Gitea, Grafana…</div>
+            </div>
+          </div>
+          <div class="wizard-step pending">
+            <div class="step-num bg-[#2A2A32] text-muted">5</div>
+            <div>
+              <div class="text-sm font-medium text-muted">Install</div>
+              <div class="text-xs text-muted opacity-60">Sit back and relax</div>
+            </div>
+          </div>
+        </div>
+        <button class="mt-5 w-full btn-orange py-2.5 text-sm">Continue →</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider max-w-5xl mx-auto"></div>
+
+<!-- Feature 2: AI-First Stack -->
+<section class="relative py-28 px-6 overflow-hidden">
+  <div class="section-glow" style="bottom:0;left:-200px;"></div>
+  <div class="max-w-6xl mx-auto flex flex-col lg:flex-row-reverse items-center gap-16 feat-alt">
+
+    <!-- Text -->
+    <div class="flex-1 reveal">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-3xl mb-8" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.25);">
+        🤖
+      </div>
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-3">AI-First Stack</p>
+      <h2 class="text-4xl sm:text-5xl font-black tracking-tight leading-tight mb-6">
+        Your own AI.<br/>
+        <span class="grad-text">Not theirs.</span>
+      </h2>
+      <p class="text-[#8B8B9A] text-lg leading-relaxed max-w-lg">
+        Run Ollama locally with Llama, Mistral, or Gemma. Or connect your OpenAI/Anthropic key. OpenClaw, Hermes, and NanoClaw give you a full agent system that lives on your hardware, not someone else's cloud.
+      </p>
+    </div>
+
+    <!-- AI mock -->
+    <div class="flex-1 reveal reveal-delay-2 w-full max-w-sm lg:max-w-md space-y-4">
+      <div class="feat-card p-4">
+        <div class="text-xs text-muted font-semibold mb-3 uppercase tracking-widest">Available Models</div>
+        <div class="flex flex-wrap gap-2">
+          <span class="llm-pill">llama3.1:8b</span>
+          <span class="llm-pill">mistral:7b</span>
+          <span class="llm-pill">phi3:mini</span>
+          <span class="llm-pill">gemma2:9b</span>
+          <span class="llm-pill">qwen2.5:7b</span>
+          <span class="llm-pill opacity-50">+ more</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="feat-card p-4 text-center" style="border-color:rgba(249,115,22,0.25);">
+          <div class="text-2xl mb-1">🦅</div>
+          <div class="text-xs font-bold text-white">OpenClaw</div>
+          <div class="text-[10px] text-muted mt-0.5">Agent UI</div>
+        </div>
+        <div class="feat-card p-4 text-center" style="border-color:rgba(249,115,22,0.20);">
+          <div class="text-2xl mb-1">🐍</div>
+          <div class="text-xs font-bold text-white">Hermes</div>
+          <div class="text-[10px] text-muted mt-0.5">Orchestrator</div>
+        </div>
+        <div class="feat-card p-4 text-center" style="border-color:rgba(249,115,22,0.15);">
+          <div class="text-2xl mb-1">⚡</div>
+          <div class="text-xs font-bold text-white">NanoClaw</div>
+          <div class="text-[10px] text-muted mt-0.5">Lite Agent</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider max-w-5xl mx-auto"></div>
+
+<!-- Feature 3: App Store -->
+<section class="relative py-28 px-6 overflow-hidden">
+  <div class="section-glow" style="top:50%;right:-100px;transform:translateY(-50%);"></div>
+  <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-16 feat-alt">
+
+    <!-- Text -->
+    <div class="flex-1 reveal">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-3xl mb-8" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.25);">
+        📦
+      </div>
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-3">App Store</p>
+      <h2 class="text-4xl sm:text-5xl font-black tracking-tight leading-tight mb-6">
+        Install anything.<br/>
+        <span class="grad-text">Own everything.</span>
+      </h2>
+      <p class="text-[#8B8B9A] text-lg leading-relaxed max-w-lg">
+        Post-install App Store lets you add, remove, and update services without touching a terminal. Coolify, Gitea, Grafana, n8n, Vaultwarden, Nextcloud — and more coming from the community registry.
+      </p>
+    </div>
+
+    <!-- App store mock -->
+    <div class="flex-1 reveal reveal-delay-2 w-full max-w-sm lg:max-w-md">
+      <div class="feat-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-xs font-bold uppercase tracking-widest text-muted">App Store</span>
+          <span class="badge-orange">14 packages</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="bg-[#1A1A1F] border border-[#2A2A32] rounded-lg p-3 flex items-center gap-2">
+            <span class="text-lg">🔧</span>
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-white truncate">Coolify</div>
+              <div class="text-[10px] text-muted">Hosting</div>
+            </div>
+          </div>
+          <div class="bg-[#1A1A1F] border border-[#2A2A32] rounded-lg p-3 flex items-center gap-2">
+            <span class="text-lg">📊</span>
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-white truncate">Grafana</div>
+              <div class="text-[10px] text-muted">Monitoring</div>
+            </div>
+          </div>
+          <div class="bg-[#1A1A1F] border border-[#2A2A32] rounded-lg p-3 flex items-center gap-2">
+            <span class="text-lg">🐙</span>
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-white truncate">Gitea</div>
+              <div class="text-[10px] text-muted">Git hosting</div>
+            </div>
+          </div>
+          <div class="bg-[#1A1A1F] border border-[#2A2A32] rounded-lg p-3 flex items-center gap-2">
+            <span class="text-lg">⚙️</span>
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-white truncate">n8n</div>
+              <div class="text-[10px] text-muted">Automation</div>
+            </div>
+          </div>
+          <div class="bg-[#1A1A1F] border border-[#2A2A32] rounded-lg p-3 flex items-center gap-2">
+            <span class="text-lg">🔐</span>
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-white truncate">Vaultwarden</div>
+              <div class="text-[10px] text-muted">Secrets</div>
+            </div>
+          </div>
+          <div class="bg-[#1A1A1F] border border-[#F97316]/30 rounded-lg p-3 flex items-center gap-2" style="border-style:dashed;">
+            <span class="text-lg">➕</span>
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-[#F97316] truncate">More coming</div>
+              <div class="text-[10px] text-muted">Community</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider max-w-5xl mx-auto"></div>
+
+<!-- Feature 4: Security -->
+<section class="relative py-28 px-6 overflow-hidden">
+  <div class="section-glow" style="top:0;left:-100px;"></div>
+  <div class="max-w-6xl mx-auto flex flex-col lg:flex-row-reverse items-center gap-16 feat-alt">
+
+    <!-- Text -->
+    <div class="flex-1 reveal">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-3xl mb-8" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.25);">
+        🔒
+      </div>
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-3">Security by Default</p>
+      <h2 class="text-4xl sm:text-5xl font-black tracking-tight leading-tight mb-6">
+        Hardened<br/>
+        <span class="grad-text">from day one.</span>
+      </h2>
+      <p class="text-[#8B8B9A] text-lg leading-relaxed max-w-lg">
+        Auto-generated passwords for every service. Traefik reverse proxy with automatic Let's Encrypt SSL. Secrets never leave your machine. Because security shouldn't be an afterthought.
+      </p>
+    </div>
+
+    <!-- Security mock -->
+    <div class="flex-1 reveal reveal-delay-2 w-full max-w-sm lg:max-w-md">
+      <div class="feat-card p-5" style="border-color:rgba(249,115,22,0.25);">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-xs font-bold uppercase tracking-widest text-muted">Secrets Vault</span>
+          <span class="text-[#F97316] text-lg">🔒</span>
+        </div>
+        <div class="space-y-2 font-mono text-xs">
+          <div class="flex items-center justify-between bg-[#1A1A1F] rounded-lg px-3 py-2.5">
+            <span class="text-muted">COOLIFY_SECRET</span>
+            <span class="text-[#F97316] tracking-widest">••••••••••••</span>
+          </div>
+          <div class="flex items-center justify-between bg-[#1A1A1F] rounded-lg px-3 py-2.5">
+            <span class="text-muted">GRAFANA_ADMIN_PW</span>
+            <span class="text-[#F97316] tracking-widest">••••••••••••</span>
+          </div>
+          <div class="flex items-center justify-between bg-[#1A1A1F] rounded-lg px-3 py-2.5">
+            <span class="text-muted">GITEA_SECRET_KEY</span>
+            <span class="text-[#F97316] tracking-widest">••••••••••••</span>
+          </div>
+          <div class="flex items-center justify-between bg-[#1A1A1F] rounded-lg px-3 py-2.5">
+            <span class="text-muted">N8N_ENCRYPTION_KEY</span>
+            <span class="text-[#F97316] tracking-widest">••••••••••••</span>
+          </div>
+          <div class="flex items-center justify-between bg-[#1A1A1F] rounded-lg px-3 py-2.5">
+            <span class="text-muted">VAULTWARDEN_TOKEN</span>
+            <span class="text-[#F97316] tracking-widest">••••••••••••</span>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center gap-2 text-xs text-green-400">
+          <span>✓</span><span>256-bit random secrets · Never sent to cloud</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  6. THE STACK                              -->
+<!-- ══════════════════════════════════════════ -->
+<section class="relative py-28 px-6 bg-[#111114] overflow-hidden">
+  <div class="section-glow" style="top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:600px;"></div>
+  <div class="max-w-6xl mx-auto relative z-10">
+
+    <div class="reveal text-center mb-4">
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-4">The Stack</p>
+      <h2 class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-4">
+        Everything your stack needs.
+      </h2>
+      <p class="text-lg text-muted">One installer. Fourteen services. Infinite possibilities.</p>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-14">
+
+      <!-- Coolify -->
+      <div class="pkg-card relative reveal reveal-delay-1">
+        <span class="star-badge">★ Koba42</span>
+        <div class="text-2xl mb-2">🔧</div>
+        <div class="font-bold text-sm text-white mb-1">Coolify</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Self-hosted Heroku. Deploy anything.</div>
+        <span class="badge-muted">Hosting</span>
+      </div>
+
+      <!-- OpenClaw -->
+      <div class="pkg-card relative reveal reveal-delay-1">
+        <span class="star-badge">★ Koba42</span>
+        <div class="text-2xl mb-2">🦅</div>
+        <div class="font-bold text-sm text-white mb-1">OpenClaw</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Full-featured local AI agent UI.</div>
+        <span class="badge-orange">AI Agent</span>
+      </div>
+
+      <!-- Hermes -->
+      <div class="pkg-card relative reveal reveal-delay-2">
+        <span class="star-badge">★ Koba42</span>
+        <div class="text-2xl mb-2">🐍</div>
+        <div class="font-bold text-sm text-white mb-1">Hermes</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Agent orchestration engine.</div>
+        <span class="badge-orange">AI Ops</span>
+      </div>
+
+      <!-- NanoClaw -->
+      <div class="pkg-card relative reveal reveal-delay-2">
+        <span class="star-badge">★ Koba42</span>
+        <div class="text-2xl mb-2">⚡</div>
+        <div class="font-bold text-sm text-white mb-1">NanoClaw</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Lightweight agent for edge devices.</div>
+        <span class="badge-orange">AI Lite</span>
+      </div>
+
+      <!-- Ollama -->
+      <div class="pkg-card reveal reveal-delay-1">
+        <div class="text-2xl mb-2">🦙</div>
+        <div class="font-bold text-sm text-white mb-1">Ollama</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Run LLMs locally. Fast &amp; private.</div>
+        <span class="badge-muted">AI Runtime</span>
+      </div>
+
+      <!-- Gitea -->
+      <div class="pkg-card reveal reveal-delay-2">
+        <div class="text-2xl mb-2">🐙</div>
+        <div class="font-bold text-sm text-white mb-1">Gitea</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Lightweight self-hosted Git.</div>
+        <span class="badge-muted">Dev</span>
+      </div>
+
+      <!-- Portainer -->
+      <div class="pkg-card reveal reveal-delay-3">
+        <div class="text-2xl mb-2">🐋</div>
+        <div class="font-bold text-sm text-white mb-1">Portainer</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Visual Docker management.</div>
+        <span class="badge-muted">Infra</span>
+      </div>
+
+      <!-- Grafana -->
+      <div class="pkg-card reveal reveal-delay-3">
+        <div class="text-2xl mb-2">📊</div>
+        <div class="font-bold text-sm text-white mb-1">Grafana</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Beautiful metrics dashboards.</div>
+        <span class="badge-muted">Monitoring</span>
+      </div>
+
+      <!-- Prometheus -->
+      <div class="pkg-card reveal reveal-delay-1">
+        <div class="text-2xl mb-2">🔥</div>
+        <div class="font-bold text-sm text-white mb-1">Prometheus</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Battle-tested metrics collection.</div>
+        <span class="badge-muted">Monitoring</span>
+      </div>
+
+      <!-- n8n -->
+      <div class="pkg-card reveal reveal-delay-2">
+        <div class="text-2xl mb-2">⚙️</div>
+        <div class="font-bold text-sm text-white mb-1">n8n</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Workflow automation your way.</div>
+        <span class="badge-muted">Automation</span>
+      </div>
+
+      <!-- Uptime Kuma -->
+      <div class="pkg-card reveal reveal-delay-2">
+        <div class="text-2xl mb-2">📡</div>
+        <div class="font-bold text-sm text-white mb-1">Uptime Kuma</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Self-hosted uptime monitoring.</div>
+        <span class="badge-muted">Monitoring</span>
+      </div>
+
+      <!-- Vaultwarden -->
+      <div class="pkg-card reveal reveal-delay-3">
+        <div class="text-2xl mb-2">🔐</div>
+        <div class="font-bold text-sm text-white mb-1">Vaultwarden</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Bitwarden-compatible password manager.</div>
+        <span class="badge-muted">Security</span>
+      </div>
+
+      <!-- Nextcloud -->
+      <div class="pkg-card reveal reveal-delay-3">
+        <div class="text-2xl mb-2">☁️</div>
+        <div class="font-bold text-sm text-white mb-1">Nextcloud</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Your private cloud storage.</div>
+        <span class="badge-muted">Storage</span>
+      </div>
+
+      <!-- SearXNG -->
+      <div class="pkg-card reveal reveal-delay-4">
+        <div class="text-2xl mb-2">🔍</div>
+        <div class="font-bold text-sm text-white mb-1">SearXNG</div>
+        <div class="text-xs text-muted mb-3 leading-relaxed">Private, self-hosted metasearch.</div>
+        <span class="badge-muted">Search</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  7. HOW IT WORKS                           -->
+<!-- ══════════════════════════════════════════ -->
+<section class="relative py-28 px-6 overflow-hidden">
+  <div class="section-glow" style="top:0;right:-100px;"></div>
+  <div class="max-w-4xl mx-auto">
+
+    <div class="reveal text-center mb-20">
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-4">How It Works</p>
+      <h2 class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight">
+        From zero to running<br/>
+        <span class="grad-text">in 3 steps.</span>
+      </h2>
+    </div>
+
+    <!-- Steps -->
+    <div class="flex flex-col gap-12">
+
+      <div class="reveal flex items-start gap-8">
+        <div class="step-circle">1</div>
+        <div class="pt-3">
+          <h3 class="text-2xl sm:text-3xl font-black mb-3">Download</h3>
+          <p class="text-muted text-lg leading-relaxed max-w-xl">
+            Grab the installer for your platform. No dependencies. No setup. Just download and run.
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="badge-muted">🐧 Linux .AppImage</span>
+            <span class="badge-muted">🍎 macOS .dmg</span>
+            <span class="badge-muted">🪟 Windows .msi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- connector -->
+      <div class="ml-10 w-px h-8 bg-gradient-to-b from-[#F97316]/40 to-transparent"></div>
+
+      <div class="reveal flex items-start gap-8">
+        <div class="step-circle">2</div>
+        <div class="pt-3">
+          <h3 class="text-2xl sm:text-3xl font-black mb-3">Configure</h3>
+          <p class="text-muted text-lg leading-relaxed max-w-xl">
+            Walk through the guided wizard. Pick your services, set your LLM, choose local or internet-facing mode.
+          </p>
+        </div>
+      </div>
+
+      <div class="ml-10 w-px h-8 bg-gradient-to-b from-[#F97316]/40 to-transparent"></div>
+
+      <div class="reveal flex items-start gap-8">
+        <div class="step-circle">3</div>
+        <div class="pt-3">
+          <h3 class="text-2xl sm:text-3xl font-black mb-3">Launch</h3>
+          <p class="text-muted text-lg leading-relaxed max-w-xl">
+            Click install. Watch your stack come up. Open your browser. You're done.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Timeline -->
+    <div class="reveal mt-16 flex items-center justify-center gap-0">
+      <div class="flex flex-col items-center gap-2">
+        <div class="timeline-dot active"></div>
+        <span class="text-xs text-[#F97316] font-semibold">Download</span>
+      </div>
+      <div class="flex-1 max-w-24 h-px bg-gradient-to-r from-[#F97316] to-[#F97316]/40 mx-2"></div>
+      <div class="flex flex-col items-center gap-2">
+        <div class="timeline-dot active"></div>
+        <span class="text-xs text-[#F97316] font-semibold">Configure</span>
+      </div>
+      <div class="flex-1 max-w-24 h-px bg-gradient-to-r from-[#F97316]/40 to-[#2A2A32] mx-2"></div>
+      <div class="flex flex-col items-center gap-2">
+        <div class="timeline-dot"></div>
+        <span class="text-xs text-muted font-semibold">Launch</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  8. DOWNLOAD                               -->
+<!-- ══════════════════════════════════════════ -->
+<section id="download" class="relative py-28 px-6 overflow-hidden">
+  <div class="download-glow"></div>
+  <div class="max-w-5xl mx-auto relative z-10">
+
+    <div class="reveal text-center mb-16">
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-4">Download</p>
+      <h2 class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-4">
+        Ready to own your stack?
+      </h2>
+      <p class="text-xl text-muted">Free. Open source. Always.</p>
+    </div>
+
+    <!-- Platform cards -->
+    <div class="grid sm:grid-cols-3 gap-5">
+
+      <!-- Linux -->
+      <div class="platform-card reveal reveal-delay-1">
+        <div class="text-4xl">🐧</div>
+        <div>
+          <div class="font-black text-xl mb-1">Linux</div>
+          <div class="font-mono text-xs text-muted">.AppImage &nbsp;·&nbsp; .deb</div>
+        </div>
+        <p class="text-sm text-muted flex-1">Ubuntu, Debian, Fedora, Arch — all major distros.</p>
+        <a href="https://github.com/Koba42Corp/opentang/releases/latest" target="_blank" rel="noopener"
+           class="btn-orange py-3 text-sm text-center font-bold w-full block">
+          Download for Linux
+        </a>
+      </div>
+
+      <!-- macOS -->
+      <div class="platform-card reveal reveal-delay-2" style="border-color:rgba(249,115,22,0.35);box-shadow:0 0 48px rgba(249,115,22,0.08);">
+        <div class="flex items-start justify-between">
+          <div class="text-4xl">🍎</div>
+          <span class="badge-orange text-[10px]">Popular</span>
+        </div>
+        <div>
+          <div class="font-black text-xl mb-1">macOS</div>
+          <div class="font-mono text-xs text-muted">.dmg</div>
+        </div>
+        <p class="text-sm text-muted flex-1">Intel + Apple Silicon (M1/M2/M3/M4).</p>
+        <a href="https://github.com/Koba42Corp/opentang/releases/latest" target="_blank" rel="noopener"
+           class="btn-orange py-3 text-sm text-center font-bold w-full block">
+          Download for macOS
+        </a>
+      </div>
+
+      <!-- Windows -->
+      <div class="platform-card reveal reveal-delay-3">
+        <div class="text-4xl">🪟</div>
+        <div>
+          <div class="font-black text-xl mb-1">Windows</div>
+          <div class="font-mono text-xs text-muted">.msi &nbsp;·&nbsp; .exe</div>
+        </div>
+        <p class="text-sm text-muted flex-1">Windows 10/11 · WSL2 required for Docker.</p>
+        <a href="https://github.com/Koba42Corp/opentang/releases/latest" target="_blank" rel="noopener"
+           class="btn-orange py-3 text-sm text-center font-bold w-full block">
+          Download for Windows
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Notes -->
+    <div class="reveal mt-8 flex flex-col sm:flex-row gap-4 justify-center text-sm text-muted text-center">
+      <div class="flex items-start gap-2 max-w-sm">
+        <span class="text-[#F97316] mt-0.5 flex-shrink-0">ℹ</span>
+        <span><strong class="text-white">macOS users:</strong> If Gatekeeper blocks the app, right-click → Open. Notarization is in progress.</span>
+      </div>
+      <div class="hidden sm:block w-px bg-[#2A2A32]"></div>
+      <div class="flex items-start gap-2 max-w-sm">
+        <span class="text-[#F97316] mt-0.5 flex-shrink-0">🐋</span>
+        <span><strong class="text-white">Docker required.</strong> OpenTang installs it for you on Linux automatically.</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  9. OPEN SOURCE                            -->
+<!-- ══════════════════════════════════════════ -->
+<section class="relative py-24 px-6 bg-[#111114] overflow-hidden">
+  <div class="section-glow" style="top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+  <div class="max-w-4xl mx-auto text-center relative z-10">
+
+    <div class="reveal">
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-4">Open Source</p>
+      <h2 class="text-4xl sm:text-5xl font-black tracking-tight mb-6">
+        Built in the open.<br/>For the community.
+      </h2>
+      <p class="text-lg text-muted leading-relaxed max-w-2xl mx-auto mb-10">
+        OpenTang is Apache 2.0 licensed. Read the code, fork it, contribute to it. Community packages welcome.
       </p>
 
-      <!-- License + stats row -->
-      <div class="flex flex-wrap gap-4 justify-center mb-10">
-        <div class="flex items-center gap-2 bg-[#111114] border border-[#2A2A32] rounded-lg px-5 py-3">
-          <span class="text-lg">⚖️</span>
-          <span class="text-white font-medium">Apache 2.0</span>
-          <span class="text-[#8B8B9A] text-sm">License</span>
-        </div>
-        <a
-          href="https://github.com/Koba42Corp/opentang"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="flex items-center gap-2 bg-[#111114] border border-[#2A2A32] rounded-lg px-5 py-3 hover:border-[#F97316] transition-colors"
-        >
-          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-          <span class="text-white font-medium">GitHub</span>
-          <span class="text-[#8B8B9A] text-sm">Koba42Corp/opentang</span>
+      <div class="flex flex-wrap justify-center gap-4 mb-12">
+        <a href="https://github.com/Koba42Corp/opentang" target="_blank" rel="noopener"
+           class="btn-orange px-7 py-3 text-sm inline-flex items-center gap-2">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          View on GitHub
         </a>
-        <div class="flex items-center gap-2 bg-[#111114] border border-[#2A2A32] rounded-lg px-5 py-3">
-          <span class="text-yellow-400 text-lg">⭐</span>
-          <span class="text-white font-medium">Star us</span>
-          <span class="text-[#8B8B9A] text-sm">on GitHub</span>
-        </div>
+        <a href="https://github.com/Koba42Corp/opentang/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener"
+           class="btn-ghost px-7 py-3 text-sm inline-flex items-center gap-2">
+          Contribute ↗
+        </a>
       </div>
 
-      <!-- Contribute CTA -->
-      <div class="bg-[#111114] border border-[#2A2A32] rounded-2xl p-8">
-        <div class="text-3xl mb-4">🤝</div>
-        <h3 class="text-white font-bold text-xl mb-3">Want to contribute?</h3>
-        <p class="text-[#8B8B9A] mb-6">
-          PRs welcome. Whether it's a new package, bug fix, or feature — we'd love your help.
-        </p>
-        <a
-          href="https://github.com/Koba42Corp/opentang/blob/main/CONTRIBUTING.md"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn-orange px-6 py-3 text-sm inline-flex items-center gap-2"
-        >
-          Read CONTRIBUTING.md →
-        </a>
+      <div class="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 text-sm text-muted font-medium">
+        <span class="flex items-center gap-2"><span class="text-[#F97316]">⚖️</span> Apache 2.0</span>
+        <span class="sep-dot"></span>
+        <span class="flex items-center gap-2"><span class="text-[#F97316]">💻</span> Cross-platform</span>
+        <span class="sep-dot"></span>
+        <span class="flex items-center gap-2"><span class="text-[#F97316]">📦</span> Community packages</span>
       </div>
     </div>
-  </section>
+
+  </div>
+</section>
 
 
-  <!-- ============================================================
-       FOOTER
-  ============================================================ -->
-  <footer class="border-t border-[#2A2A32] bg-[#080809] py-12 px-4 sm:px-6">
-    <div class="max-w-6xl mx-auto">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-        <!-- Logo -->
-        <a href="#" class="flex items-center">
-          <img
-            src="https://api.dracattus.com/v1/files/koba42/5b08ccf263df2102b7f6b0c9fe19cb5e_opentang-logo-w-text.png"
-            alt="OpenTang"
-            class="h-7 w-auto opacity-80 hover:opacity-100 transition-opacity"
-          />
-        </a>
+<!-- ══════════════════════════════════════════ -->
+<!--  10. LEGAL (id=docs)                       -->
+<!-- ══════════════════════════════════════════ -->
+<section id="docs" class="relative py-24 px-6 border-t border-[#2A2A32] overflow-hidden">
+  <div class="max-w-6xl mx-auto">
 
-        <!-- Links -->
-        <div class="flex flex-wrap gap-6 text-sm text-[#8B8B9A] justify-center">
-          <a href="https://github.com/Koba42Corp/opentang" target="_blank" rel="noopener noreferrer"
-             class="hover:text-white transition-colors">GitHub</a>
-          <a href="https://github.com/Koba42Corp/opentang#readme" target="_blank" rel="noopener noreferrer"
-             class="hover:text-white transition-colors">Docs</a>
-          <a href="https://github.com/Koba42Corp/opentang/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer"
-             class="hover:text-white transition-colors">Contributing</a>
-          <a href="https://github.com/Koba42Corp/opentang/releases" target="_blank" rel="noopener noreferrer"
-             class="hover:text-white transition-colors">Releases</a>
+    <div class="reveal text-center mb-14">
+      <p class="text-xs font-bold uppercase tracking-widest text-[#F97316] mb-3">Legal</p>
+      <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Terms &amp; License</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8">
+
+      <!-- Terms of Service -->
+      <div class="reveal feat-card p-7">
+        <h3 class="font-black text-lg mb-4 flex items-center gap-2">
+          <span class="text-[#F97316]">📋</span> Terms of Service (Summary)
+        </h3>
+        <p class="text-sm text-muted mb-5">By using OpenTang you agree:</p>
+        <ul class="space-y-3 text-sm text-muted leading-relaxed">
+          <li class="flex gap-3"><span class="text-[#F97316] flex-shrink-0 mt-0.5">·</span><span>OpenTang is provided <strong class="text-white">AS-IS</strong> with no warranties of any kind.</span></li>
+          <li class="flex gap-3"><span class="text-[#F97316] flex-shrink-0 mt-0.5">·</span><span>You use this software entirely at <strong class="text-white">your own risk</strong>.</span></li>
+          <li class="flex gap-3"><span class="text-[#F97316] flex-shrink-0 mt-0.5">·</span><span>Koba42 Corp is <strong class="text-white">not liable</strong> for any damages, data loss, security incidents, or other issues arising from use.</span></li>
+          <li class="flex gap-3"><span class="text-[#F97316] flex-shrink-0 mt-0.5">·</span><span>You are <strong class="text-white">responsible for securing</strong> your own installation.</span></li>
+          <li class="flex gap-3"><span class="text-[#F97316] flex-shrink-0 mt-0.5">·</span><span>OpenTang may install third-party services (Docker, Coolify, etc.) — <strong class="text-white">their own terms apply</strong>.</span></li>
+          <li class="flex gap-3"><span class="text-[#F97316] flex-shrink-0 mt-0.5">·</span><span>Do <strong class="text-white">not use OpenTang for illegal purposes</strong>.</span></li>
+        </ul>
+      </div>
+
+      <!-- EULA -->
+      <div class="reveal reveal-delay-1 feat-card p-7">
+        <h3 class="font-black text-lg mb-4 flex items-center gap-2">
+          <span class="text-[#F97316]">📄</span> End User License Agreement
+        </h3>
+        <div class="text-xs font-bold uppercase tracking-widest text-muted mb-4">OpenTang EULA — v1.0</div>
+        <div class="space-y-4 text-sm text-muted leading-relaxed overflow-y-auto max-h-72 pr-2" style="scrollbar-width:thin;scrollbar-color:#2A2A32 transparent;">
+          <p>Copyright &copy; 2026 Koba42 Corp. All rights reserved.</p>
+
+          <p><strong class="text-white">LICENSE GRANT:</strong> OpenTang is licensed under the Apache License 2.0. You are free to use, copy, modify, and distribute this software subject to the terms of that license. A copy of the Apache 2.0 license is included with the software and available at apache.org/licenses/LICENSE-2.0.</p>
+
+          <p><strong class="text-white">DISCLAIMER OF WARRANTIES:</strong> THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL KOBA42 CORP OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING BUT NOT LIMITED TO PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+
+          <p><strong class="text-white">THIRD-PARTY SOFTWARE:</strong> OpenTang installs and configures third-party software including but not limited to Docker, Coolify, Gitea, Grafana, Prometheus, n8n, Ollama, Vaultwarden, and Nextcloud. Each of these services is governed by its own license and terms. Koba42 Corp makes no representations regarding these third-party services and is not responsible for their operation, security, or compliance.</p>
+
+          <p><strong class="text-white">DATA &amp; PRIVACY:</strong> OpenTang operates entirely on your local machine or server. Koba42 Corp does not collect, transmit, or store any user data, configuration details, or usage telemetry. Any data you store within services installed by OpenTang is your sole responsibility.</p>
+
+          <p><strong class="text-white">ACCEPTABLE USE:</strong> You agree not to use OpenTang or any services it installs for any unlawful purpose, to violate the rights of others, or in any manner that could harm, disable, or overburden any system or network.</p>
+
+          <p><strong class="text-white">GOVERNING LAW:</strong> This agreement shall be governed by the laws of the jurisdiction in which Koba42 Corp is incorporated, without regard to conflict of law provisions.</p>
+
+          <p><strong class="text-white">CONTACT:</strong> For licensing questions or legal inquiries, contact Koba42 Corp through the GitHub repository at github.com/Koba42Corp/opentang.</p>
         </div>
       </div>
 
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-[#2A2A32] text-sm text-[#8B8B9A]">
-        <span>© 2026 Koba42 Corp · Apache 2.0 License</span>
-        <a
-          href="https://koba42.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="flex items-center gap-1.5 hover:text-[#F97316] transition-colors"
-        >
-          Powered by
-          <span class="text-white font-semibold">Koba42</span>
-          <span class="text-[#F97316]">↗</span>
-        </a>
-      </div>
     </div>
-  </footer>
+  </div>
+</section>
 
 
-  <!-- ============================================================
-       JS: mobile menu + scroll animations
-  ============================================================ -->
-  <script>
-    // Mobile nav toggle
-    const toggle = document.getElementById('nav-toggle');
-    const mobileMenu = document.getElementById('mobile-menu');
-    toggle.addEventListener('click', () => {
-      mobileMenu.classList.toggle('hidden');
+<!-- ══════════════════════════════════════════ -->
+<!--  FOOTER                                    -->
+<!-- ══════════════════════════════════════════ -->
+<footer class="border-t border-[#2A2A32] py-10 px-6 bg-[#0A0A0B]">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+
+    <div class="flex items-center gap-2.5">
+      <img src="https://api.dracattus.com/v1/files/koba42/7aa3f80c1d48124b659ee1c7908d0920_logo-no-text.png"
+           alt="OpenTang" class="h-7 w-auto opacity-80" />
+      <span class="font-bold text-white/70 text-sm">OpenTang</span>
+    </div>
+
+    <div class="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs text-muted">
+      <a href="https://github.com/Koba42Corp/opentang" target="_blank" rel="noopener" class="hover:text-white transition-colors">GitHub</a>
+      <span class="w-px h-3 bg-[#2A2A32]"></span>
+      <a href="#docs" class="hover:text-white transition-colors">Legal</a>
+      <span class="w-px h-3 bg-[#2A2A32]"></span>
+      <a href="https://github.com/Koba42Corp/opentang/releases/latest" target="_blank" rel="noopener" class="hover:text-white transition-colors">Download</a>
+      <span class="w-px h-3 bg-[#2A2A32]"></span>
+      <a href="https://github.com/Koba42Corp/opentang/blob/main/LICENSE" target="_blank" rel="noopener" class="hover:text-white transition-colors">Apache 2.0</a>
+    </div>
+
+    <p class="text-xs text-muted">&copy; 2026 Koba42 Corp</p>
+
+  </div>
+</footer>
+
+
+<!-- ══════════════════════════════════════════ -->
+<!--  SCRIPTS                                   -->
+<!-- ══════════════════════════════════════════ -->
+<script>
+  // ── Mobile menu toggle ──────────────────────
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobile-menu');
+  hamburger.addEventListener('click', () => {
+    mobileMenu.classList.toggle('open');
+  });
+  // Close menu on link click
+  mobileMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => mobileMenu.classList.remove('open'));
+  });
+
+  // ── Scroll reveal ────────────────────────────
+  const revealEls = document.querySelectorAll('.reveal');
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        revealObserver.unobserve(entry.target);
+      }
     });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => revealObserver.observe(el));
 
-    // Close mobile menu on link click
-    mobileMenu.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        mobileMenu.classList.add('hidden');
-      });
-    });
+  // ── Terminal animation ───────────────────────
+  const terminalLines = document.querySelectorAll('#terminal-content .terminal-line');
+  let currentLine = 0;
 
-    // Intersection Observer for fade-up animations
-    const observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-    );
+  function revealNextLine() {
+    if (currentLine < terminalLines.length) {
+      const line = terminalLines[currentLine];
+      line.style.animation = 'typeLine 0.25s ease forwards';
+      line.classList.add('visible');
+      currentLine++;
+      const delay = currentLine === 1 ? 300 : currentLine === 5 ? 800 : 280;
+      setTimeout(revealNextLine, delay);
+    }
+  }
 
-    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  // Start terminal when hero is in view
+  const heroTerminal = document.getElementById('hero-terminal');
+  const termObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      setTimeout(revealNextLine, 600);
+      termObserver.disconnect();
+    }
+  }, { threshold: 0.3 });
+  termObserver.observe(heroTerminal);
 
-    // Stagger children of grids that are fade-up'd
-    document.querySelectorAll('.fade-up').forEach((el, i) => {
-      el.style.transitionDelay = `${(i % 4) * 80}ms`;
-    });
-  </script>
+  // ── Nav shadow on scroll ─────────────────────
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('main-nav');
+    if (window.scrollY > 10) {
+      nav.style.boxShadow = '0 4px 32px rgba(0,0,0,0.5)';
+    } else {
+      nav.style.boxShadow = 'none';
+    }
+  }, { passive: true });
+</script>
 
 </body>
 </html>
