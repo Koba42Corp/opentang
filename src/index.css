@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── OpenTang Design System — CSS Custom Properties ─────────────────────── */
+
+:root {
+  /* Primary — Orange Fire */
+  --color-primary-900: #7c2d00;
+  --color-primary-800: #9a3900;
+  --color-primary-700: #c24e00;
+  --color-primary-600: #ea6300;
+  --color-primary-500: #f97316;
+  --color-primary-400: #fb923c;
+  --color-primary-300: #fdba74;
+  --color-primary-200: #fed7aa;
+  --color-primary-100: #fff7ed;
+
+  /* Backgrounds */
+  --color-bg-deep: #0a0a0b;
+  --color-bg-base: #111113;
+  --color-bg-elevated: #1a1a1e;
+  --color-bg-overlay: #242428;
+
+  /* Borders */
+  --color-border: #2e2e34;
+  --color-border-subtle: #1e1e22;
+
+  /* Text */
+  --color-text-primary: #f8f8f8;
+  --color-text-secondary: #a0a0a8;
+  --color-text-muted: #606068;
+  --color-text-inverse: #0a0a0b;
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  --color-pending: #f97316;
+}
+
+/* ─── Base Reset ──────────────────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-deep);
+  color: var(--color-text-primary);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent text selection on interactive UI elements */
+button {
+  user-select: none;
+}
+
+/* ─── Scrollbar Styling ───────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3e3e46;
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes orangePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(249, 115, 22, 0);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Utility Classes ─────────────────────────────────────────────────────── */
+
+.animate-orange-pulse {
+  animation: orangePulse 1.5s ease-in-out infinite;
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 200ms ease-out both;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", Consolas, monospace;
+}
+
+/* Standard transition for interactive elements */
+.transition-standard {
+  transition: all 150ms ease-in-out;
+}

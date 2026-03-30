@@ -1,0 +1,37 @@
+[package]
+name = "opentang"
+version = "0.1.0"
+description = "OpenTang — Your stack. Your rules."
+authors = ["Koba42 Corp"]
+license = "Apache-2.0"
+repository = "https://github.com/Koba42/opentang"
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and to allow it to be imported
+# by the tauri-build process below
+name = "opentang_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.dev]
+incremental = true
+
+[profile.release]
+panic = "abort"      # Strip expensive panic clean-up logic
+codegen-units = 1    # Compile crates one after another so the compiler can optimize better
+lto = true           # Enables link-time-optimizations
+opt-level = "s"      # Optimize for binary size
+strip = true         # Automatically strip symbols from the binary
