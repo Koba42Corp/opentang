@@ -11,7 +11,8 @@ The open-source, cross-platform desktop app that bootstraps your complete self-h
 ![License](https://img.shields.io/badge/license-Apache%202.0-orange)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 ![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%20v2-blue)
-![Version](https://img.shields.io/badge/version-0.1.0-orange)
+![Version](https://img.shields.io/badge/version-0.1.0--beta-orange)
+![Status](https://img.shields.io/badge/status-beta-yellow)
 
 *Think: Homebrew meets Docker Desktop meets an AI-native App Store.*
 
