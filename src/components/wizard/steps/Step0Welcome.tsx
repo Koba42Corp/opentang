@@ -1,6 +1,7 @@
 import { ArrowRight, ExternalLink, Github } from "lucide-react";
 import { useWizardStore } from "../../../store/useWizardStore";
 import { Button } from "../../shared/Button";
+import logoWordmark from "../../../assets/logo-wordmark.png";
 
 export default function Step0Welcome() {
   const { nextStep, completeStep } = useWizardStore();
@@ -31,7 +32,7 @@ export default function Step0Welcome() {
 
         {/* Logo / Title */}
         <img
-          src="/src/assets/logo-wordmark.png"
+          src={logoWordmark}
           alt="OpenTang"
           style={{ maxWidth: "320px" }}
           className="mx-auto mb-6"

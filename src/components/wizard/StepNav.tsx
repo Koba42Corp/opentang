@@ -1,3 +1,4 @@
+import logoMark from "../../assets/logo-mark.png";
 import {
   Home,
   Monitor,
@@ -42,7 +43,7 @@ export default function StepNav() {
           className="flex flex-col items-center hover:opacity-80 transition-opacity"
         >
           <img
-            src="/src/assets/logo-mark.png"
+            src={logoMark}
             alt="OpenTang"
             style={{ width: "40px" }}
             className="mb-4"
