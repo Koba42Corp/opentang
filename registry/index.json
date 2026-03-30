@@ -229,7 +229,6 @@
       "download_url": "https://github.com/xch-dev/sage/releases/latest",
       "source_url": "https://github.com/xch-dev/sage",
       "koba42_featured": true,
-      "chia_ecosystem": true,
       "official": false,
       "compose_service": null
     }
