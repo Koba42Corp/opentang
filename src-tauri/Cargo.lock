@@ -2541,7 +2541,7 @@ dependencies = [
 
 [[package]]
 name = "opentang"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dirs 5.0.1",
  "rand 0.9.2",
