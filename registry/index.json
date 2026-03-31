@@ -236,7 +236,7 @@
       "id": "ipfs",
       "name": "IPFS (Kubo)",
       "version": "latest",
-      "description": "Decentralized file storage and content-addressed networking. Run your own IPFS node with the official Kubo implementation.",
+      "description": "Decentralized file storage. Run your own IPFS node with the official Kubo implementation.",
       "category": "storage",
       "tags": [
         "ipfs",
@@ -246,19 +246,13 @@
         "web3"
       ],
       "icon": "\ud83c\udf10",
-      "ports": [
-        5001,
-        4001,
-        8080
-      ],
-      "resources": {
-        "ram_mb": 512,
-        "disk_gb": 10
-      },
-      "install_type": "docker",
-      "homepage": "https://ipfs.tech",
-      "docs": "https://docs.ipfs.tech/install/run-ipfs-inside-docker/",
-      "featured": false
+      "min_ram_mb": 512,
+      "min_disk_gb": 10,
+      "port": 5001,
+      "url_path": null,
+      "koba42_featured": false,
+      "official": true,
+      "compose_service": "ipfs"
     },
     {
       "id": "nextcloud",
