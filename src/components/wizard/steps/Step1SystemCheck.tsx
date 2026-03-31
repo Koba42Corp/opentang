@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Monitor, ArrowRight, ArrowLeft, RefreshCw, CheckCircle2, AlertTriangle, XCircle, Loader2, Package } from "lucide-react";
-import { useWizardStore, SystemCheckResult, CheckItem } from "../../../store/useWizardStore";
+import { Monitor, ArrowRight, ArrowLeft, RefreshCw, CheckCircle2, AlertTriangle, XCircle, Loader2, Package, Zap } from "lucide-react";
+import { useWizardStore, SystemCheckResult, CheckItem, DetectedService } from "../../../store/useWizardStore";
 import { Button } from "../../shared/Button";
 import { Card } from "../../shared/Card";
 
@@ -37,10 +37,11 @@ function CheckIcon({ status }: { status: CheckItem["status"] }) {
 }
 
 export default function Step1SystemCheck() {
-  const { nextStep, prevStep, completeStep, currentStep, setSystemCheck } = useWizardStore();
+  const { nextStep, prevStep, completeStep, currentStep, setSystemCheck, setDetectedServices } = useWizardStore();
   const [result, setResult] = useState<SystemCheckResult | null>(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [detectedServices, setLocalDetectedServices] = useState<DetectedService[]>([]);
 
   const [dockerInstalling, setDockerInstalling] = useState(false);
   const [dockerProgress, setDockerProgress] = useState<string[]>([]);
@@ -57,6 +58,14 @@ export default function Step1SystemCheck() {
       if (isTauri()) {
         const { invoke } = await import("@tauri-apps/api/core");
         data = await invoke<SystemCheckResult>("system_check");
+        // Also scan for existing services (non-blocking — failures silently ignored)
+        try {
+          const detected = await invoke<DetectedService[]>("scan_existing_services");
+          setLocalDetectedServices(detected);
+          setDetectedServices(detected);
+        } catch {
+          // Docker may not be running yet — ignore
+        }
       } else {
         // Simulate a brief scan delay in dev mode
         await new Promise((r) => setTimeout(r, 800));
@@ -242,6 +251,39 @@ export default function Step1SystemCheck() {
                   <span className="text-ot-text-secondary font-mono">{result.disk_gb.toFixed(0)} GB</span>
                 </div>
               </div>
+
+              {/* Detected services panel */}
+              {detectedServices.length > 0 && (
+                <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                    <span className="text-sm font-semibold text-amber-300">Existing services detected</span>
+                  </div>
+                  <ul className="space-y-1 mb-2">
+                    {detectedServices.map((svc) => {
+                      const mainPort = svc.ports.length > 0 ? svc.ports[0].host_port : null;
+                      return (
+                        <li key={svc.id} className="flex items-center gap-2 text-xs text-amber-200">
+                          <span className={[
+                            "w-2 h-2 rounded-full flex-shrink-0",
+                            svc.status === "running" ? "bg-green-400" : "bg-yellow-400",
+                          ].join(" ")} />
+                          <span className="font-medium">{svc.name}</span>
+                          <span className="text-amber-400/70">—</span>
+                          <span className="text-amber-300/70">
+                            {svc.status === "running"
+                              ? `running${mainPort ? ` on port ${mainPort}` : ""}`
+                              : "installed but stopped"}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="text-xs text-amber-400/80">
+                    These will be skipped during install. You can override this in Package Selection.
+                  </p>
+                </div>
+              )}
 
               {/* Retry button if any failures */}
               {hasFail && (

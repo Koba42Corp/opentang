@@ -79,7 +79,27 @@ export default function Step7Install() {
     setInstallPath,
     updateInstallStep,
     appendInstallLog,
+    detectedServices,
+    forceReinstallPackages,
   } = useWizardStore();
+
+  // Compute excluded packages: running detected services not in forceReinstall
+  const runningDetectedIds = detectedServices.filter((s) => s.status === "running").map((s) => s.id);
+  const excludedPackages = runningDetectedIds.filter((id) => !forceReinstallPackages.includes(id));
+
+  // Compute detected port overrides
+  const detectedPorts: Record<string, number> = {};
+  for (const svc of detectedServices) {
+    if (svc.ports.length > 0) {
+      detectedPorts[svc.id] = svc.ports[0].host_port;
+    }
+  }
+
+  // What will actually be installed vs skipped
+  const installingPackages = selectedPackages.filter((id) => !excludedPackages.includes(id));
+  const skippingPackages = excludedPackages.filter((id) =>
+    selectedPackages.includes(id) || runningDetectedIds.includes(id)
+  );
 
   const [showLogs, setShowLogs] = useState(false);
   const [editingPath, setEditingPath] = useState(false);
@@ -148,6 +168,8 @@ export default function Step7Install() {
           llm_model: llmConfig?.model ?? null,
           credentials,
           install_path: installPath,
+          excluded_packages: excludedPackages,
+          detected_ports: detectedPorts,
         },
       });
 
@@ -342,10 +364,26 @@ export default function Step7Install() {
 
   // ── Pre-install review ─────────────────────────────────────────────────────
 
+  const pkgLabel = (id: string): string => {
+    const map: Record<string, string> = {
+      coolify: "Coolify", portainer: "Portainer", gitea: "Gitea", grafana: "Grafana",
+      prometheus: "Prometheus", ollama: "Ollama", n8n: "n8n", "uptime-kuma": "Uptime Kuma",
+      vaultwarden: "Vaultwarden", nextcloud: "Nextcloud", searxng: "SearXNG",
+      "openclaw-agent": "AI Agent",
+    };
+    return map[id] ?? id;
+  };
+
   const summaryRows = [
     { label: "Edition", value: editionLabel(edition), step: 2 },
     { label: "LLM", value: llmLabel(llmMode, llmConfig), step: 3 },
-    { label: "Packages", value: `${selectedPackages.length} selected`, step: 4 },
+    {
+      label: "Packages",
+      value: skippingPackages.length > 0
+        ? `${installingPackages.length} installing, ${skippingPackages.length} skipping`
+        : `${selectedPackages.length} selected`,
+      step: 4,
+    },
     { label: "Network", value: networkLabel(networkMode), step: 5 },
     { label: "Security", value: Object.keys(credentials).length > 0 ? "Credentials configured" : "Not configured", step: 6 },
   ];
@@ -389,6 +427,32 @@ export default function Step7Install() {
           </div>
         ))}
       </div>
+
+      {/* Installing / Skipping breakdown */}
+      {skippingPackages.length > 0 && (
+        <div className="rounded-xl border border-ot-border bg-ot-elevated px-5 py-4 mb-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-semibold text-ot-text-muted uppercase tracking-wider mb-1.5">
+                Installing ({installingPackages.length})
+              </p>
+              <p className="text-sm text-ot-text">
+                {installingPackages.length > 0
+                  ? installingPackages.map(pkgLabel).join(", ")
+                  : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-ot-text-muted uppercase tracking-wider mb-1.5">
+                Skipping ({skippingPackages.length})
+              </p>
+              <p className="text-sm text-ot-text-secondary">
+                {skippingPackages.map((id) => `${pkgLabel(id)} ✓`).join(", ")}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Install path picker */}
       <div className="rounded-xl border border-ot-border bg-ot-elevated px-5 py-4 mb-2">

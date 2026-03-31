@@ -50,6 +50,22 @@ export interface ServiceStatus {
   ports: string[];
 }
 
+// ── v0.1.1: Pre-install detection types ───────────────────────────────────────
+
+export interface PortMapping {
+  host_port: number;
+  container_port: number;
+}
+
+export interface DetectedService {
+  id: string;
+  name: string;
+  container_name: string;
+  image: string;
+  status: string; // "running" | "stopped" | "unknown"
+  ports: PortMapping[];
+}
+
 // ── M6: Registry types ────────────────────────────────────────────────────────
 
 export interface Package {
@@ -114,8 +130,14 @@ interface WizardState {
   llmMode: "local" | "cloud" | "skip" | null;
   llmConfig: LlmConfig | null;
 
+  // Step 1 — detected services
+  detectedServices: DetectedService[];
+  setDetectedServices: (services: DetectedService[]) => void;
+
   // Step 4
   selectedPackages: string[];
+  forceReinstallPackages: string[];
+  toggleForceReinstall: (id: string) => void;
 
   // Step 5
   networkMode: "local" | "lan" | "internet" | null;
@@ -174,11 +196,13 @@ export const useWizardStore = create<WizardState>()((set) => ({
   completedSteps: [],
 
   systemCheck: null,
+  detectedServices: [],
 
   edition: null,
   llmMode: null,
   llmConfig: null,
   selectedPackages: [],
+  forceReinstallPackages: [],
   networkMode: null,
   networkConfig: null,
   credentials: {},
@@ -209,6 +233,7 @@ export const useWizardStore = create<WizardState>()((set) => ({
     })),
 
   setSystemCheck: (result) => set({ systemCheck: result }),
+  setDetectedServices: (detectedServices) => set({ detectedServices }),
   setEdition: (edition) => set({ edition }),
   setLlmMode: (llmMode) => set({ llmMode }),
   setLlmConfig: (llmConfig) => set({ llmConfig }),
@@ -224,6 +249,13 @@ export const useWizardStore = create<WizardState>()((set) => ({
     })),
 
   setSelectedPackages: (packages) => set({ selectedPackages: packages }),
+
+  toggleForceReinstall: (id) =>
+    set((state) => ({
+      forceReinstallPackages: state.forceReinstallPackages.includes(id)
+        ? state.forceReinstallPackages.filter((p) => p !== id)
+        : [...state.forceReinstallPackages, id],
+    })),
 
   startInstall: () => set({ isInstalling: true, installLogs: [] }),
 

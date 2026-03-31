@@ -392,3 +392,148 @@ pub async fn system_check() -> SystemCheckResult {
         checks,
     }
 }
+
+// ── Pre-install service detection ─────────────────────────────────────────────
+
+#[derive(serde::Serialize, Clone)]
+pub struct PortMapping {
+    pub host_port: u16,
+    pub container_port: u16,
+}
+
+#[derive(serde::Serialize, Clone)]
+pub struct DetectedService {
+    pub id: String,
+    pub name: String,
+    pub container_name: String,
+    pub image: String,
+    pub status: String, // "running" | "stopped" | "unknown"
+    pub ports: Vec<PortMapping>,
+}
+
+fn match_package_id(image: &str, name: &str) -> Option<&'static str> {
+    let image_lower = image.to_lowercase();
+    let name_lower = name.to_lowercase();
+    if image_lower.contains("coollabsio/coolify") || name_lower.contains("coolify") { return Some("coolify"); }
+    if image_lower.contains("portainer/portainer") || name_lower.contains("portainer") { return Some("portainer"); }
+    if image_lower.contains("gitea/gitea") || name_lower.contains("gitea") { return Some("gitea"); }
+    if image_lower.contains("grafana/grafana") || name_lower.contains("grafana") { return Some("grafana"); }
+    if image_lower.contains("prom/prometheus") || name_lower.contains("prometheus") { return Some("prometheus"); }
+    if image_lower.contains("ollama/ollama") || name_lower.contains("ollama") { return Some("ollama"); }
+    if image_lower.contains("n8nio/n8n") || name_lower.contains("n8n") { return Some("n8n"); }
+    if image_lower.contains("louislam/uptime-kuma") || name_lower.contains("uptime-kuma") || name_lower.contains("uptime_kuma") { return Some("uptime-kuma"); }
+    if image_lower.contains("vaultwarden/server") || name_lower.contains("vaultwarden") { return Some("vaultwarden"); }
+    if image_lower.contains("nextcloud") || name_lower.contains("nextcloud") { return Some("nextcloud"); }
+    if image_lower.contains("searxng/searxng") || name_lower.contains("searxng") { return Some("searxng"); }
+    if image_lower.contains("openclaw") || image_lower.contains("hermes") || image_lower.contains("nanoclaw")
+       || name_lower.contains("openclaw") || name_lower.contains("hermes") || name_lower.contains("nanoclaw") { return Some("openclaw"); }
+    None
+}
+
+fn parse_port_bindings(ports_str: &str) -> Vec<PortMapping> {
+    let mut result: Vec<PortMapping> = Vec::new();
+    if ports_str.is_empty() {
+        return result;
+    }
+    for segment in ports_str.split(", ") {
+        let segment = segment.trim();
+        if let Some(arrow_pos) = segment.find("->") {
+            let left = &segment[..arrow_pos];
+            let right = &segment[arrow_pos + 2..];
+            let host_port: u16 = left.rsplit(':')
+                .next()
+                .and_then(|p| p.parse().ok())
+                .unwrap_or(0);
+            let container_port: u16 = right.split('/')
+                .next()
+                .and_then(|p| p.parse().ok())
+                .unwrap_or(0);
+            if host_port > 0 && container_port > 0 {
+                // Deduplicate (IPv4 and IPv6 bindings appear separately)
+                if !result.iter().any(|m| m.host_port == host_port && m.container_port == container_port) {
+                    result.push(PortMapping { host_port, container_port });
+                }
+            }
+        }
+    }
+    result
+}
+
+fn id_to_display_name(id: &str) -> &'static str {
+    match id {
+        "coolify"     => "Coolify",
+        "portainer"   => "Portainer",
+        "gitea"       => "Gitea",
+        "grafana"     => "Grafana",
+        "prometheus"  => "Prometheus",
+        "ollama"      => "Ollama",
+        "n8n"         => "n8n",
+        "uptime-kuma" => "Uptime Kuma",
+        "vaultwarden" => "Vaultwarden",
+        "nextcloud"   => "Nextcloud",
+        "searxng"     => "SearXNG",
+        "openclaw"    => "OpenClaw",
+        _             => "Unknown",
+    }
+}
+
+#[tauri::command]
+pub async fn scan_existing_services() -> Vec<DetectedService> {
+    let docker_bin = find_docker_binary().unwrap_or_else(|| std::path::PathBuf::from("docker"));
+
+    let output = match std::process::Command::new(&docker_bin)
+        .args(["ps", "-a", "--format", "{{json .}}"])
+        .output()
+    {
+        Ok(o) if o.status.success() => o,
+        _ => return Vec::new(),
+    };
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut detected: Vec<DetectedService> = Vec::new();
+
+    for line in stdout.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let val: serde_json::Value = match serde_json::from_str(line) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+
+        let image = val["Image"].as_str().unwrap_or("").to_string();
+        let names = val["Names"].as_str().unwrap_or("").to_string();
+        let state = val["State"].as_str().unwrap_or("unknown").to_string();
+        let ports_str = val["Ports"].as_str().unwrap_or("").to_string();
+
+        let id = match match_package_id(&image, &names) {
+            Some(id) => id.to_string(),
+            None => continue,
+        };
+
+        // Skip if we already found this service (first match wins)
+        if detected.iter().any(|d| d.id == id) {
+            continue;
+        }
+
+        let status = match state.as_str() {
+            "running" => "running",
+            "exited" | "stopped" | "dead" => "stopped",
+            _ => "unknown",
+        };
+
+        let ports = parse_port_bindings(&ports_str);
+
+        detected.push(DetectedService {
+            id: id.clone(),
+            name: id_to_display_name(&id).to_string(),
+            container_name: names,
+            image,
+            status: status.to_string(),
+            ports,
+        });
+    }
+
+    detected
+}

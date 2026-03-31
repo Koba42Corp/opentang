@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Package, ArrowRight, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Package, ArrowRight, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import { useWizardStore } from "../../../store/useWizardStore";
 import { Button } from "../../shared/Button";
 
@@ -43,12 +43,23 @@ function formatMb(mb: number) {
 }
 
 export default function Step4Packages() {
-  const { nextStep, prevStep, completeStep, currentStep, selectedPackages, setSelectedPackages, togglePackage, systemCheck } = useWizardStore();
+  const {
+    nextStep, prevStep, completeStep, currentStep,
+    selectedPackages, setSelectedPackages, togglePackage,
+    systemCheck, detectedServices,
+    forceReinstallPackages, toggleForceReinstall,
+  } = useWizardStore();
+
+  const runningIds = detectedServices.filter((s) => s.status === "running").map((s) => s.id);
+  const stoppedIds = detectedServices.filter((s) => s.status === "stopped").map((s) => s.id);
 
   // Seed defaults on first mount
   useEffect(() => {
     if (selectedPackages.length === 0) {
-      setSelectedPackages([...CORE_IDS, ...TIER1_DEFAULTS]);
+      // Exclude running detected services by default; include stopped ones
+      const defaults = [...CORE_IDS, ...TIER1_DEFAULTS].filter((id) => !runningIds.includes(id));
+      const stoppedToAdd = stoppedIds.filter((id) => !defaults.includes(id));
+      setSelectedPackages([...defaults, ...stoppedToAdd]);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -119,6 +130,11 @@ export default function Step4Packages() {
         packages={tier1}
         selectedPackages={selectedPackages}
         onToggle={togglePackage}
+        runningIds={runningIds}
+        stoppedIds={stoppedIds}
+        detectedServices={detectedServices}
+        forceReinstallPackages={forceReinstallPackages}
+        onToggleForceReinstall={toggleForceReinstall}
       />
 
       {/* Tier 2 */}
@@ -127,6 +143,11 @@ export default function Step4Packages() {
         packages={tier2}
         selectedPackages={selectedPackages}
         onToggle={togglePackage}
+        runningIds={runningIds}
+        stoppedIds={stoppedIds}
+        detectedServices={detectedServices}
+        forceReinstallPackages={forceReinstallPackages}
+        onToggleForceReinstall={toggleForceReinstall}
       />
 
       {/* Resource estimator */}
@@ -172,66 +193,140 @@ export default function Step4Packages() {
   );
 }
 
+import { DetectedService } from "../../../store/useWizardStore";
+
 function PackageSection({
   title,
   packages,
   selectedPackages,
   onToggle,
+  runningIds,
+  stoppedIds,
+  detectedServices,
+  forceReinstallPackages,
+  onToggleForceReinstall,
 }: {
   title: string;
   packages: PkgDef[];
   selectedPackages: string[];
   onToggle: (id: string) => void;
+  runningIds: string[];
+  stoppedIds: string[];
+  detectedServices: DetectedService[];
+  forceReinstallPackages: string[];
+  onToggleForceReinstall: (id: string) => void;
 }) {
   return (
     <div className="mb-5">
       <p className="text-xs font-semibold text-ot-text-muted uppercase tracking-wider mb-2">{title}</p>
       <div className="rounded-xl border border-ot-border bg-ot-elevated overflow-hidden">
         {packages.map((pkg, i) => {
-          const isOn = selectedPackages.includes(pkg.id);
+          const isRunning = runningIds.includes(pkg.id);
+          const isStopped = stoppedIds.includes(pkg.id);
+          const isForced = forceReinstallPackages.includes(pkg.id);
+          const isOn = isRunning ? isForced : selectedPackages.includes(pkg.id);
+          const svc = detectedServices.find((s) => s.id === pkg.id);
+          const mainPort = svc?.ports[0]?.host_port;
+
           return (
             <div
               key={pkg.id}
               className={[
-                "flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-ot-overlay",
+                "px-4 py-3",
                 i !== packages.length - 1 ? "border-b border-ot-border" : "",
               ].join(" ")}
-              onClick={() => onToggle(pkg.id)}
             >
-              {/* Toggle */}
               <div
                 className={[
-                  "relative w-8 h-4.5 rounded-full transition-colors flex-shrink-0",
-                  "w-9 h-5",
-                  isOn ? "bg-ot-orange-500" : "bg-ot-overlay border border-ot-border",
+                  "flex items-center gap-3",
+                  !isRunning ? "cursor-pointer transition-colors hover:bg-ot-overlay rounded-lg" : "",
                 ].join(" ")}
+                onClick={() => !isRunning && onToggle(pkg.id)}
               >
-                <span
+                {/* Toggle */}
+                <div
                   className={[
-                    "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform",
-                    isOn ? "translate-x-4" : "translate-x-0.5",
+                    "relative w-9 h-5 rounded-full transition-colors flex-shrink-0",
+                    isRunning && !isForced
+                      ? "bg-ot-overlay border border-ot-border opacity-50 cursor-not-allowed"
+                      : isOn
+                      ? "bg-ot-orange-500 cursor-pointer"
+                      : "bg-ot-overlay border border-ot-border cursor-pointer",
                   ].join(" ")}
-                />
+                >
+                  <span
+                    className={[
+                      "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform",
+                      isOn ? "translate-x-4" : "translate-x-0.5",
+                    ].join(" ")}
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={["text-sm font-medium", isOn ? "text-ot-text" : "text-ot-text-secondary"].join(" ")}>
+                      {pkg.name}
+                    </span>
+                    {pkg.featured && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-ot-orange-500/20 text-ot-orange-400 border border-ot-orange-500/30">
+                        Koba42
+                      </span>
+                    )}
+                    {isRunning && !isForced && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
+                        ✓ Already Running{mainPort ? ` :${mainPort}` : ""}
+                      </span>
+                    )}
+                    {isRunning && isForced && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        ⚠ Force Reinstall
+                      </span>
+                    )}
+                    {isStopped && !isRunning && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                        ⏸ Installed but stopped
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-ot-text-muted">
+                    {isRunning && !isForced
+                      ? `Detected running${mainPort ? ` on port ${mainPort}` : ""}. Will be skipped.`
+                      : isStopped && !isRunning
+                      ? "Found stopped container. Will be restarted."
+                      : pkg.description}
+                  </p>
+                </div>
+
+                <div className="text-right flex-shrink-0">
+                  <p className="text-xs text-ot-text-muted font-mono">{formatMb(pkg.ramMb)} RAM</p>
+                  <p className="text-xs text-ot-text-muted font-mono">{formatMb(pkg.diskMb)} disk</p>
+                </div>
               </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className={["text-sm font-medium", isOn ? "text-ot-text" : "text-ot-text-secondary"].join(" ")}>
-                    {pkg.name}
-                  </span>
-                  {pkg.featured && (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-ot-orange-500/20 text-ot-orange-400 border border-ot-orange-500/30">
-                      Koba42
-                    </span>
+              {/* Force Reinstall toggle for running services */}
+              {isRunning && (
+                <div className="mt-2 ml-12">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleForceReinstall(pkg.id); }}
+                    className={[
+                      "flex items-center gap-1.5 text-xs transition-colors",
+                      isForced
+                        ? "text-amber-400 hover:text-amber-300"
+                        : "text-ot-text-muted hover:text-ot-text-secondary",
+                    ].join(" ")}
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    {isForced
+                      ? "Cancel Force Reinstall"
+                      : "Force Reinstall"}
+                  </button>
+                  {isForced && (
+                    <p className="text-[10px] text-amber-500/80 mt-1">
+                      ⚠ This will reconfigure the existing container. Proceed with caution.
+                    </p>
                   )}
                 </div>
-                <p className="text-xs text-ot-text-muted">{pkg.description}</p>
-              </div>
-
-              <div className="text-right flex-shrink-0">
-                <p className="text-xs text-ot-text-muted font-mono">{formatMb(pkg.ramMb)} RAM</p>
-                <p className="text-xs text-ot-text-muted font-mono">{formatMb(pkg.diskMb)} disk</p>
-              </div>
+              )}
             </div>
           );
         })}
