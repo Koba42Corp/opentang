@@ -193,7 +193,7 @@ fn build_compose(config: &InstallConfig) -> String {
                  volumes:\n\
                    - /var/run/docker.sock:/var/run/docker.sock\n\
                    - coolify_data:/data/coolify\n\
-             {labels}    networks:\n\
+{labels}    networks:\n\
                    - opentang\n",
             coolify_port = coolify_port,
             labels = traefik_labels_block("coolify", internet),
@@ -213,7 +213,7 @@ fn build_compose(config: &InstallConfig) -> String {
                  volumes:\n\
                - /var/run/docker.sock:/var/run/docker.sock\n\
                - portainer_data:/data\n\
-             {labels}    networks:\n\
+{labels}    networks:\n\
                - opentang\n",
             portainer_port = portainer_port,
             labels = traefik_labels_block("portainer", internet),
@@ -238,7 +238,7 @@ fn build_compose(config: &InstallConfig) -> String {
                GITEA_ADMIN_USER: ${{GITEA_ADMIN_USER}}\n\
                GITEA_ADMIN_PASSWORD: ${{GITEA_ADMIN_PASSWORD}}\n\
                GITEA_ADMIN_EMAIL: admin@localhost\n\
-             {labels}    volumes:\n\
+{labels}    volumes:\n\
                - gitea_data:/data\n\
              networks:\n\
                - opentang\n",
@@ -260,7 +260,7 @@ fn build_compose(config: &InstallConfig) -> String {
              environment:\n\
                GF_SECURITY_ADMIN_USER: ${{GF_SECURITY_ADMIN_USER}}\n\
                GF_SECURITY_ADMIN_PASSWORD: ${{GF_SECURITY_ADMIN_PASSWORD}}\n\
-             {labels}    volumes:\n\
+{labels}    volumes:\n\
                - grafana_data:/var/lib/grafana\n\
              networks:\n\
                - opentang\n",
@@ -279,7 +279,7 @@ fn build_compose(config: &InstallConfig) -> String {
              restart: unless-stopped\n\
              ports:\n\
                - \"{prometheus_port}:9090\"\n\
-             {labels}volumes:\n\
+{labels}    volumes:\n\
                - prometheus_data:/prometheus\n\
              networks:\n\
                - opentang\n",
@@ -322,7 +322,7 @@ fn build_compose(config: &InstallConfig) -> String {
                N8N_BASIC_AUTH_PASSWORD: ${{N8N_PASSWORD}}\n\
                N8N_HOST: ${{DOMAIN:-localhost}}\n\
                WEBHOOK_URL: http://${{DOMAIN:-localhost}}:{n8n_port}\n\
-             {labels}volumes:\n\
+{labels}    volumes:\n\
                - n8n_data:/home/node/.n8n\n\
              networks:\n\
                - opentang\n",
@@ -341,7 +341,7 @@ fn build_compose(config: &InstallConfig) -> String {
              restart: unless-stopped\n\
              ports:\n\
                - \"{uptime_port}:3001\"\n\
-             {labels}volumes:\n\
+{labels}    volumes:\n\
                - uptime_kuma_data:/app/data\n\
              networks:\n\
                - opentang\n",
@@ -362,7 +362,7 @@ fn build_compose(config: &InstallConfig) -> String {
                - \"{vaultwarden_port}:80\"\n\
              environment:\n\
                ADMIN_TOKEN: ${{VAULTWARDEN_ADMIN_TOKEN}}\n\
-             {labels}volumes:\n\
+{labels}    volumes:\n\
                - vaultwarden_data:/data\n\
              networks:\n\
                - opentang\n",
@@ -404,7 +404,7 @@ fn build_compose(config: &InstallConfig) -> String {
                MYSQL_PASSWORD: ${{NEXTCLOUD_DB_PASSWORD}}\n\
                NEXTCLOUD_ADMIN_USER: ${{NEXTCLOUD_ADMIN_USER}}\n\
                NEXTCLOUD_ADMIN_PASSWORD: ${{NEXTCLOUD_ADMIN_PASSWORD}}\n\
-             {labels}volumes:\n\
+{labels}    volumes:\n\
                - nextcloud_data:/var/www/html\n\
              networks:\n\
                - opentang\n",
@@ -423,7 +423,7 @@ fn build_compose(config: &InstallConfig) -> String {
              restart: unless-stopped\n\
              ports:\n\
                - \"{searxng_port}:8080\"\n\
-             {labels}volumes:\n\
+{labels}    volumes:\n\
                - searxng_data:/etc/searxng\n\
              networks:\n\
                - opentang\n",
@@ -446,7 +446,7 @@ fn build_compose(config: &InstallConfig) -> String {
                - \"{openclaw_port}:3000\"\n\
              environment:\n\
                OPENCLAW_SECRET: ${{OPENCLAW_SECRET}}\n\
-             {labels}volumes:\n\
+{labels}    volumes:\n\
                - openclaw_data:/app/data\n\
              networks:\n\
                - opentang\n",
