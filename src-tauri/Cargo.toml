@@ -1,6 +1,6 @@
 [package]
 name = "opentang"
-version = "0.1.0"
+version = "0.1.1"
 description = "OpenTang — Your stack. Your rules."
 authors = ["Koba42 Corp"]
 license = "Apache-2.0"
