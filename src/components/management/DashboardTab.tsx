@@ -15,6 +15,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useWizardStore, ServiceStatus } from "../../store/useWizardStore";
+import { ChatPanel } from "./ChatPanel";
 
 interface VersionInfo {
   latest: string;
@@ -274,6 +275,21 @@ export default function DashboardTab() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* AI Assistant Chat Panel — only shown when an agent edition is installed */}
+      {installState?.edition && (
+        <div className="mt-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-semibold text-ot-text">AI Assistant</h3>
+            <span className="text-xs text-ot-text-muted">· Powered by your installed agent</span>
+          </div>
+          <ChatPanel
+            installPath={path}
+            edition={installState.edition}
+            services={statuses}
+          />
         </div>
       )}
     </div>
