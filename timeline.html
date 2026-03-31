@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Built in 14 Hours — The OpenTang Build Timeline</title>
+  <meta name="description" content="47 commits. 7 milestones. 14 services. 3 platforms. How Starfleet Command built and shipped OpenTang in a single day." />
+  <meta property="og:title" content="Built in 14 Hours — The OpenTang Build Timeline" />
+  <meta property="og:description" content="47 commits. 7 milestones. 14 services. 3 platforms. How Starfleet Command built and shipped OpenTang in a single day." />
+  <meta property="og:image" content="https://opentang.koba42.com/og-image.jpg" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Built in 14 Hours — The OpenTang Build Timeline" />
+  <meta name="twitter:description" content="47 commits. 7 milestones. 14 services. 3 platforms. How Starfleet Command built and shipped OpenTang in a single day." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0A0A0B',
+            surface: '#111114',
+            elevated: '#1A1A1F',
+            border: '#2A2A32',
+            orange: '#F97316',
+            text: '#F8F8F8',
+            muted: '#8B8B9A',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --orange: #F97316;
+      --bg: #0A0A0B;
+      --surface: #111114;
+      --elevated: #1A1A1F;
+      --border: #2A2A32;
+      --text: #F8F8F8;
+      --muted: #8B8B9A;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+
+    /* ── NAV ── */
+    .nav-glass {
+      background: rgba(10, 10, 11, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(42, 42, 50, 0.6);
+    }
+
+    /* ── HERO ── */
+    .hero-gradient {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.12) 0%, transparent 70%),
+                  radial-gradient(ellipse 50% 40% at 20% 80%, rgba(249,115,22,0.06) 0%, transparent 60%);
+    }
+
+    .orange-text-gradient {
+      background: linear-gradient(135deg, #F97316 0%, #FB923C 40%, #FDBA74 70%, #F97316 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 4s linear infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    /* ── HERO COUNTER ── */
+    .hero-stat {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .hero-stat.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── HERO TEXT STAGGER ── */
+    .hero-line {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .hero-line.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── SCROLL BOUNCE ── */
+    @keyframes bounce-slow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+    .bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
+
+    /* ── TICKER ── */
+    .ticker-wrapper {
+      overflow: hidden;
+      white-space: nowrap;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .ticker-track {
+      display: inline-block;
+      animation: ticker 30s linear infinite;
+      white-space: nowrap;
+    }
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ── CREW CARDS ── */
+    .crew-card {
+      opacity: 0;
+      transform: translateY(40px) scale(0.97);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .crew-card.visible { opacity: 1; transform: translateY(0) scale(1); }
+    .crew-card:hover {
+      transform: scale(1.02) translateY(-2px);
+      border-color: rgba(249,115,22,0.4);
+      box-shadow: 0 0 30px rgba(249,115,22,0.1);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* ── TIMELINE SPINE ── */
+    .timeline-spine {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      transform: translateX(-50%);
+      background: linear-gradient(to bottom, transparent, #F97316 5%, #F97316 95%, transparent);
+      filter: blur(0.5px);
+      box-shadow: 0 0 8px rgba(249,115,22,0.6), 0 0 20px rgba(249,115,22,0.3);
+    }
+
+    @media (max-width: 768px) {
+      .timeline-spine {
+        left: 24px;
+      }
+    }
+
+    /* ── TIMELINE NODES ── */
+    .timeline-node {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      position: relative;
+      z-index: 10;
+    }
+    .node-milestone {
+      background: #F97316;
+      box-shadow: 0 0 0 4px rgba(249,115,22,0.2);
+      animation: pulse-orange 2.5s ease-in-out infinite;
+    }
+    .node-feature {
+      background: var(--muted);
+      box-shadow: 0 0 0 3px rgba(139,139,154,0.2);
+    }
+    .node-fix {
+      background: #F59E0B;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.2);
+    }
+    .node-debug {
+      background: #EF4444;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.2);
+    }
+
+    @keyframes pulse-orange {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(249,115,22,0.2), 0 0 12px rgba(249,115,22,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(249,115,22,0.1), 0 0 24px rgba(249,115,22,0.6); }
+    }
+
+    /* ── TIMELINE CARDS ── */
+    .timeline-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      opacity: 0;
+      transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .timeline-card.from-left { transform: translateX(-40px); }
+    .timeline-card.from-right { transform: translateX(40px); }
+    .timeline-card.from-bottom { transform: translateY(30px); }
+    .timeline-card.visible { opacity: 1; transform: translateX(0) translateY(0); }
+    .timeline-card:hover {
+      border-color: rgba(249,115,22,0.3);
+      box-shadow: 0 4px 20px rgba(249,115,22,0.08);
+    }
+
+    /* milestone cards */
+    .timeline-card.type-milestone {
+      border-color: rgba(249,115,22,0.2);
+    }
+    .timeline-card.type-milestone:hover {
+      border-color: rgba(249,115,22,0.5);
+      box-shadow: 0 4px 30px rgba(249,115,22,0.15);
+    }
+
+    /* debug cards */
+    .timeline-card.type-debug {
+      border-color: rgba(239,68,68,0.2);
+    }
+    .timeline-card.type-debug:hover {
+      border-color: rgba(239,68,68,0.4);
+      box-shadow: 0 4px 20px rgba(239,68,68,0.1);
+    }
+
+    /* fix cards */
+    .timeline-card.type-fix {
+      border-color: rgba(245,158,11,0.2);
+    }
+    .timeline-card.type-fix:hover {
+      border-color: rgba(245,158,11,0.4);
+      box-shadow: 0 4px 20px rgba(245,158,11,0.1);
+    }
+
+    /* FINAL CARD — v0.1.1 */
+    .timeline-card.final-card {
+      border-color: rgba(249,115,22,0.5);
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(249,115,22,0.05) 100%);
+      animation: final-glow 3s ease-in-out infinite;
+    }
+    @keyframes final-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(249,115,22,0.2), 0 0 40px rgba(249,115,22,0.1), inset 0 0 20px rgba(249,115,22,0.03); border-color: rgba(249,115,22,0.5); }
+      50% { box-shadow: 0 0 40px rgba(249,115,22,0.4), 0 0 80px rgba(249,115,22,0.2), inset 0 0 30px rgba(249,115,22,0.06); border-color: rgba(249,115,22,0.8); }
+    }
+
+    /* ── BADGE STYLES ── */
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-milestone { background: rgba(249,115,22,0.15); color: #F97316; border: 1px solid rgba(249,115,22,0.3); }
+    .badge-feature { background: rgba(139,139,154,0.15); color: #8B8B9A; border: 1px solid rgba(139,139,154,0.3); }
+    .badge-debug { background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-fix { background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-live { background: rgba(34,197,94,0.15); color: #22C55E; border: 1px solid rgba(34,197,94,0.3); }
+    .badge-brand { background: rgba(168,85,247,0.15); color: #A855F7; border: 1px solid rgba(168,85,247,0.3); }
+    .badge-ecosystem { background: rgba(6,182,212,0.15); color: #06B6D4; border: 1px solid rgba(6,182,212,0.3); }
+    .badge-beta { background: rgba(251,191,36,0.15); color: #FBBF24; border: 1px solid rgba(251,191,36,0.3); }
+
+    .commit-hash {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* ── STATS SECTION ── */
+    .stat-number {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 900;
+      color: #F97316;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .stat-item {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .stat-item.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── VERDICT SECTION ── */
+    .verdict-bg {
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(249,115,22,0.08) 0%, transparent 70%);
+    }
+
+    /* ── BUTTONS ── */
+    .btn-orange {
+      background: #F97316;
+      color: #fff;
+      font-weight: 700;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .btn-orange:hover {
+      background: #EA6C10;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(249,115,22,0.35);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      font-weight: 600;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .btn-ghost:hover {
+      border-color: rgba(249,115,22,0.5);
+      background: rgba(249,115,22,0.05);
+      transform: translateY(-1px);
+    }
+
+    /* ── SECTION FADE ── */
+    .section-fade {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .section-fade.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── GRID NOISE ── */
+    .grid-noise {
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    /* ── HIGHLIGHT CARD (M4 FIRST BLOOD) ── */
+    .timeline-card.highlight-card {
+      border-color: rgba(249,115,22,0.4);
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(249,115,22,0.04) 100%);
+    }
+    .timeline-card.highlight-card::before {
+      content: '★ KEY MILESTONE';
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #F97316;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── TIMELINE CONNECTOR LINE (mobile) ── */
+    @media (max-width: 768px) {
+      .timeline-card.from-left,
+      .timeline-card.from-right { transform: translateY(20px); }
+    }
+
+    /* ── SECTION HEADINGS ── */
+    .section-heading {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+  </style>
+</head>
+<body class="bg-bg text-text font-sans grid-noise">
+
+  <!-- ═══════════════════════════════════════
+       NAV
+  ═══════════════════════════════════════ -->
+  <nav class="nav-glass fixed top-0 left-0 right-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 group">
+        <img src="https://api.dracattus.com/v1/files/koba42/7aa3f80c1d48124b659ee1c7908d0920_logo-no-text.png"
+             alt="OpenTang mark" class="w-6 h-6 object-contain" />
+        <span class="font-bold text-base text-text group-hover:text-orange transition-colors">OpenTang</span>
+      </a>
+      <div class="flex items-center gap-4 text-sm">
+        <a href="/" class="text-muted hover:text-text transition-colors">← Back to Home</a>
+        <a href="https://github.com/Koba42Corp/opentang" target="_blank" rel="noopener"
+           class="text-muted hover:text-orange transition-colors flex items-center gap-1">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════
+       HERO
+  ═══════════════════════════════════════ -->
+  <section class="hero-gradient min-h-screen flex flex-col items-center justify-center px-4 pt-14 relative overflow-hidden">
+    <!-- Background decorative elements -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-orange/5 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-1/3 right-1/4 w-48 h-48 bg-orange/4 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Eyebrow -->
+    <div class="hero-line mb-8" style="transition-delay: 0.1s">
+      <span class="font-mono text-xs tracking-widest text-orange uppercase border border-orange/30 bg-orange/5 px-3 py-1.5 rounded">
+        March 30, 2026 · Build Timeline
+      </span>
+    </div>
+
+    <!-- Counter Stats -->
+    <div class="flex flex-wrap justify-center gap-8 sm:gap-16 mb-12">
+      <div class="hero-stat text-center" style="transition-delay: 0.2s">
+        <div class="text-4xl sm:text-5xl font-black text-orange counter" data-target="47">0</div>
+        <div class="text-xs font-mono tracking-widest text-muted uppercase mt-1">Commits</div>
+      </div>
+      <div class="hero-stat text-center" style="transition-delay: 0.4s">
+        <div class="text-4xl sm:text-5xl font-black text-orange counter" data-target="14">0</div>
+        <div class="text-xs font-mono tracking-widest text-muted uppercase mt-1">Hours</div>
+      </div>
+      <div class="hero-stat text-center" style="transition-delay: 0.6s">
+        <div class="text-4xl sm:text-5xl font-black text-orange counter" data-target="14">0</div>
+        <div class="text-xs font-mono tracking-widest text-muted uppercase mt-1">Services</div>
+      </div>
+      <div class="hero-stat text-center" style="transition-delay: 0.8s">
+        <div class="text-4xl sm:text-5xl font-black text-orange counter" data-target="3">0</div>
+        <div class="text-xs font-mono tracking-widest text-muted uppercase mt-1">Platforms</div>
+      </div>
+    </div>
+
+    <!-- Main Headline -->
+    <h1 class="text-center max-w-4xl">
+      <div class="hero-line text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-none" style="transition-delay: 0.3s">
+        We built a complete
+      </div>
+      <div class="hero-line text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-none mt-1" style="transition-delay: 0.5s">
+        AI dev stack installer
+      </div>
+      <div class="hero-line text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-none mt-1" style="transition-delay: 0.7s">
+        <span class="orange-text-gradient">in 14 hours.</span>
+      </div>
+    </h1>
+
+    <!-- Subheadline -->
+    <p class="hero-line text-lg sm:text-xl text-muted max-w-2xl text-center mt-8 leading-relaxed font-light" style="transition-delay: 0.9s">
+      47 commits. 7 milestones. Zero shortcuts. This is what happens when AI stops being a tool and starts being your crew.
+    </p>
+
+    <!-- Scroll indicator -->
+    <div class="hero-line absolute bottom-10 flex flex-col items-center gap-2" style="transition-delay: 1.1s">
+      <span class="text-xs font-mono tracking-widest text-muted uppercase">Scroll to explore</span>
+      <div class="bounce-slow text-orange text-xl">↓</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       STORY BAR / TICKER
+  ═══════════════════════════════════════ -->
+  <div class="ticker-wrapper py-3">
+    <div class="ticker-track">
+      <span class="text-sm font-mono font-semibold text-orange tracking-widest">
+        IDEA&nbsp;&nbsp;→&nbsp;&nbsp;ARCHITECTURE&nbsp;&nbsp;→&nbsp;&nbsp;CODE&nbsp;&nbsp;→&nbsp;&nbsp;DEBUG&nbsp;&nbsp;→&nbsp;&nbsp;SHIP&nbsp;&nbsp;→&nbsp;&nbsp;LIVE&nbsp;&nbsp;→&nbsp;&nbsp;BETA TESTERS&nbsp;&nbsp;→&nbsp;&nbsp;BUG REPORTS&nbsp;&nbsp;→&nbsp;&nbsp;FIXED&nbsp;&nbsp;→&nbsp;&nbsp;v0.1.1&nbsp;&nbsp;→&nbsp;&nbsp;STILL GOING&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </span>
+      <span class="text-sm font-mono font-semibold text-orange tracking-widest">
+        IDEA&nbsp;&nbsp;→&nbsp;&nbsp;ARCHITECTURE&nbsp;&nbsp;→&nbsp;&nbsp;CODE&nbsp;&nbsp;→&nbsp;&nbsp;DEBUG&nbsp;&nbsp;→&nbsp;&nbsp;SHIP&nbsp;&nbsp;→&nbsp;&nbsp;LIVE&nbsp;&nbsp;→&nbsp;&nbsp;BETA TESTERS&nbsp;&nbsp;→&nbsp;&nbsp;BUG REPORTS&nbsp;&nbsp;→&nbsp;&nbsp;FIXED&nbsp;&nbsp;→&nbsp;&nbsp;v0.1.1&nbsp;&nbsp;→&nbsp;&nbsp;STILL GOING&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       THE CREW
+  ═══════════════════════════════════════ -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 py-24">
+    <div class="section-fade text-center mb-16">
+      <h2 class="section-heading mb-3">Three minds. One mission.</h2>
+      <p class="text-muted text-lg">Meet the Starfleet Command crew that built OpenTang.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Card 1 -->
+      <div class="crew-card p-6" style="transition-delay: 0s">
+        <div class="text-5xl mb-4">⚓</div>
+        <div class="inline-block bg-orange/10 text-orange text-xs font-mono font-bold tracking-wider px-2 py-1 rounded mb-2 border border-orange/20">
+          Fleet Commander
+        </div>
+        <h3 class="text-xl font-bold mt-2 mb-3">Admiral Dracattus</h3>
+        <p class="text-muted text-sm leading-relaxed">
+          The vision. The direction. The relentless push to ship something real. Admiral Dracattus conceived OpenTang as a personal productivity tool and turned it into an open-source product in the same conversation.
+        </p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="crew-card p-6" style="transition-delay: 0.15s">
+        <div class="text-5xl mb-4">🖖</div>
+        <div class="inline-block bg-orange/10 text-orange text-xs font-mono font-bold tracking-wider px-2 py-1 rounded mb-2 border border-orange/20">
+          Starfleet Command AI · Strategy & Architecture
+        </div>
+        <h3 class="text-xl font-bold mt-2 mb-3">Admiral Nakamura</h3>
+        <p class="text-muted text-sm leading-relaxed">
+          Planned 7 milestones before a single line of code was written. Coordinated parallel build sessions, resolved merge conflicts, debugged CI pipelines, and wrote the EULA — all while keeping the mission on track.
+        </p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="crew-card p-6" style="transition-delay: 0.3s">
+        <div class="text-5xl mb-4">🚀</div>
+        <div class="inline-block bg-orange/10 text-orange text-xs font-mono font-bold tracking-wider px-2 py-1 rounded mb-2 border border-orange/20">
+          USS Enterprise · Execution & Deployment
+        </div>
+        <h3 class="text-xl font-bold mt-2 mb-3">Jean-Luc Picard</h3>
+        <p class="text-muted text-sm leading-relaxed">
+          The hands on the keyboard. Picard built 517 Rust crates, wired 14 Docker services, and deployed the complete frontend — end to end — across every milestone.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       THE TIMELINE
+  ═══════════════════════════════════════ -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 pb-8">
+    <div class="section-fade text-center mb-20">
+      <h2 class="section-heading mb-3">Every commit. Every breakthrough.</h2>
+      <p class="text-muted text-lg">March 30, 2026. 14 hours that shipped a product.</p>
+    </div>
+
+    <!-- Timeline container -->
+    <div class="relative" id="timeline">
+      <!-- Spine -->
+      <div class="timeline-spine hidden md:block"></div>
+
+      <!-- Mobile spine -->
+      <div class="absolute left-6 top-0 bottom-0 w-0.5 md:hidden"
+           style="background: linear-gradient(to bottom, transparent, #F97316 5%, #F97316 95%, transparent); filter: blur(0.5px); box-shadow: 0 0 8px rgba(249,115,22,0.6);"></div>
+
+      <div class="space-y-12">
+
+        <!-- EVENT 1 — THE SPARK -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="md:col-start-1 md:pr-8 md:text-right order-2 md:order-1 flex-1">
+            <div class="timeline-card type-milestone from-left" data-side="left">
+              <div class="flex items-center gap-2 mb-2 md:justify-end flex-wrap">
+                <span class="text-lg">💬</span>
+                <span class="badge badge-milestone">The Spark</span>
+                <span class="text-muted font-mono text-xs">09:34 AM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">A conversation that started a product</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                Admiral Dracattus sent the first message: build me an installer for my self-hosted stack. No brief. No spec. Just a vision and a deadline of "let us build this."
+              </p>
+            </div>
+          </div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone"></div>
+          </div>
+          <div class="hidden md:block order-3"></div>
+        </div>
+
+        <!-- EVENT 2 — PLANNING -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="hidden md:block md:col-start-1 order-1"></div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone"></div>
+          </div>
+          <div class="md:col-start-3 md:pl-8 order-2 md:order-3 flex-1">
+            <div class="timeline-card type-milestone from-right" data-side="right">
+              <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="text-lg">📋</span>
+                <span class="badge badge-milestone">Planning</span>
+                <span class="text-muted font-mono text-xs">10:40 AM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">PRD, Design System & Build Checklist</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                Before writing a single line of code: a full Product Requirements Document, a complete design system (dark theme + orange), and a 100-task build checklist. Shipped in 66 minutes.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT 3 — M1 BONES -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="md:col-start-1 md:pr-8 md:text-right order-2 md:order-1 flex-1">
+            <div class="timeline-card type-milestone from-left" data-side="left">
+              <div class="flex items-center gap-2 mb-2 md:justify-end flex-wrap">
+                <span class="text-lg">🚀</span>
+                <span class="badge badge-milestone">M1 — Bones</span>
+                <span class="text-muted font-mono text-xs">11:29 AM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">Tauri v2 scaffold, all 9 wizard steps</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                First commit: a complete Tauri v2 + React + TypeScript scaffold with the full wizard shell, design system applied, fonts loaded, and every step navigable. Zero to buildable in one shot.
+              </p>
+              <div class="mt-3 flex justify-end">
+                <span class="commit-hash">e011fa2</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone" style="width:20px;height:20px;"></div>
+          </div>
+          <div class="hidden md:block order-3"></div>
+        </div>
+
+        <!-- EVENT 4 — M2 HEARTBEAT -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="hidden md:block md:col-start-1 order-1"></div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone"></div>
+          </div>
+          <div class="md:col-start-3 md:pl-8 order-2 md:order-3 flex-1">
+            <div class="timeline-card type-milestone from-right" data-side="right">
+              <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="text-lg">🔍</span>
+                <span class="badge badge-milestone">M2 — Heartbeat</span>
+                <span class="text-muted font-mono text-xs">12:56 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">Real system detection goes live</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                The app now reads your actual machine: Docker version, RAM, disk space, WSL2 status. All via sysinfo Rust crate. The wizard blocks on failures and guides you through fixes.
+              </p>
+              <div class="mt-3">
+                <span class="commit-hash">0f9849c</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT 5 — M3 WIZARD -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="md:col-start-1 md:pr-8 md:text-right order-2 md:order-1 flex-1">
+            <div class="timeline-card type-milestone from-left" data-side="left">
+              <div class="flex items-center gap-2 mb-2 md:justify-end flex-wrap">
+                <span class="text-lg">🧙</span>
+                <span class="badge badge-milestone">M3 — The Wizard</span>
+                <span class="text-muted font-mono text-xs">13:04 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">Full interactive UI, all 9 steps</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                All 9 wizard steps fully built: Edition picker, LLM config (Ollama + cloud), package selection with live resource estimator, network mode, credential generator, review screen, and install progress.
+              </p>
+              <div class="mt-3 flex justify-end">
+                <span class="commit-hash">1a8e9a5</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone" style="width:20px;height:20px;"></div>
+          </div>
+          <div class="hidden md:block order-3"></div>
+        </div>
+
+        <!-- EVENT 6 — M4 FIRST BLOOD ★ -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="hidden md:block md:col-start-1 order-1"></div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone" style="width:22px;height:22px; box-shadow: 0 0 0 6px rgba(249,115,22,0.25), 0 0 20px rgba(249,115,22,0.6);"></div>
+          </div>
+          <div class="md:col-start-3 md:pl-8 order-2 md:order-3 flex-1">
+            <div class="timeline-card type-milestone highlight-card from-right" data-side="right">
+              <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="text-lg">🩸</span>
+                <span class="badge badge-milestone">M4 — First Blood</span>
+                <span class="text-muted font-mono text-xs">13:21 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">Real Docker Compose engine</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                The install button now actually installs. A Rust engine generates production-quality docker-compose.yml files, runs <code class="font-mono text-xs bg-elevated px-1 rounded text-orange">docker compose up -d</code>, and streams real container logs back to the UI in real time.
+              </p>
+              <div class="mt-3">
+                <span class="commit-hash">fa6f97a</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT 7 — M5 FULL STACK -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="md:col-start-1 md:pr-8 md:text-right order-2 md:order-1 flex-1">
+            <div class="timeline-card type-milestone from-left" data-side="left">
+              <div class="flex items-center gap-2 mb-2 md:justify-end flex-wrap">
+                <span class="text-lg">📦</span>
+                <span class="badge badge-milestone">M5 — Full Stack</span>
+                <span class="text-muted font-mono text-xs">13:39 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">All 14 services. SSL. Health checks.</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                Coolify, OpenClaw, Gitea, Grafana, Prometheus, n8n, Uptime Kuma, Vaultwarden, Nextcloud, SearXNG — all with production Compose templates, Traefik SSL, and post-install health polling.
+              </p>
+              <div class="mt-3 flex justify-end">
+                <span class="commit-hash">30162bb</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone"></div>
+          </div>
+          <div class="hidden md:block order-3"></div>
+        </div>
+
+        <!-- EVENT 8 — M6 REGISTRY -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="hidden md:block md:col-start-1 order-1"></div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone"></div>
+          </div>
+          <div class="md:col-start-3 md:pl-8 order-2 md:order-3 flex-1">
+            <div class="timeline-card type-milestone from-right" data-side="right">
+              <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="text-lg">🏪</span>
+                <span class="badge badge-milestone">M6 — Registry</span>
+                <span class="text-muted font-mono text-xs">13:40 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">App Store. Dashboard. State persistence.</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                Post-install management: a full App Store with category browsing, install/remove/update per package, a live Dashboard with container health, and state persistence so the app remembers your stack.
+              </p>
+              <div class="mt-3">
+                <span class="commit-hash">49e5b65</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT 9 — M7 SHIP IT -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="md:col-start-1 md:pr-8 md:text-right order-2 md:order-1 flex-1">
+            <div class="timeline-card type-milestone from-left" data-side="left">
+              <div class="flex items-center gap-2 mb-2 md:justify-end flex-wrap">
+                <span class="text-lg">🚢</span>
+                <span class="badge badge-milestone">M7 — Ship It</span>
+                <span class="text-muted font-mono text-xs">13:53 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">GitHub Actions release pipeline</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                4-platform CI matrix: Linux, macOS Intel, macOS Apple Silicon, Windows. GitHub Actions builds signed installers on every tag. README polished. Auto-update wired.
+              </p>
+              <div class="mt-3 flex justify-end">
+                <span class="commit-hash">d73fa45</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone" style="width:20px;height:20px;"></div>
+          </div>
+          <div class="hidden md:block order-3"></div>
+        </div>
+
+        <!-- EVENT 10 — DOCKER AUTO-INSTALL -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="hidden md:block md:col-start-1 order-1"></div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-feature"></div>
+          </div>
+          <div class="md:col-start-3 md:pl-8 order-2 md:order-3 flex-1">
+            <div class="timeline-card type-feature from-right" data-side="right">
+              <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="text-lg">🐳</span>
+                <span class="badge badge-feature">Feature</span>
+                <span class="text-muted font-mono text-xs">14:22 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">Docker auto-install added</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                Users without Docker get a single "Install Docker" button. On Linux it runs the official get.docker.com script. On macOS it opens OrbStack. No prerequisites required.
+              </p>
+              <div class="mt-3">
+                <span class="commit-hash">4ae47b2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT 11 — BRAND -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="md:col-start-1 md:pr-8 md:text-right order-2 md:order-1 flex-1">
+            <div class="timeline-card type-feature from-left" data-side="left">
+              <div class="flex items-center gap-2 mb-2 md:justify-end flex-wrap">
+                <span class="text-lg">🍊</span>
+                <span class="badge badge-brand">Brand</span>
+                <span class="text-muted font-mono text-xs">14:57 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">Logo integrated throughout the app</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                The official OpenTang citrus logo — wordmark for hero screens, mark-only for nav and icons — deployed across Welcome screen, sidebar, management shell, and all platform icons.
+              </p>
+              <div class="mt-3 flex justify-end">
+                <span class="commit-hash">04654dc</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-feature"></div>
+          </div>
+          <div class="hidden md:block order-3"></div>
+        </div>
+
+        <!-- EVENT 12 — LIVE -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="hidden md:block md:col-start-1 order-1"></div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone" style="background:#22C55E; box-shadow: 0 0 0 4px rgba(34,197,94,0.2); animation: none;"></div>
+          </div>
+          <div class="md:col-start-3 md:pl-8 order-2 md:order-3 flex-1">
+            <div class="timeline-card type-milestone from-right" data-side="right" style="border-color: rgba(34,197,94,0.2);">
+              <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="text-lg">🌐</span>
+                <span class="badge badge-live">Live</span>
+                <span class="text-muted font-mono text-xs">14:58 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">opentang.koba42.com goes live</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                Landing page deployed to GitHub Pages via Cloudflare. Dark theme, orange branding, full feature sections, EULA, TOS, and Sage Wallet as the first Chia ecosystem integration.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT 13 — BETA TESTED / DEBUG -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="md:col-start-1 md:pr-8 md:text-right order-2 md:order-1 flex-1">
+            <div class="timeline-card type-debug from-left" data-side="left">
+              <div class="flex items-center gap-2 mb-2 md:justify-end flex-wrap">
+                <span class="text-lg">🐛</span>
+                <span class="badge badge-beta">Beta Tested</span>
+                <span class="text-muted font-mono text-xs">16:25 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">4 bugs found. 4 bugs fixed. Same hour.</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                A community beta tester (with Jarvis AI) found: YAML indentation corruption, $ in passwords breaking .env, non-existent Docker images, and a port conflict. All four diagnosed and patched within 60 minutes.
+              </p>
+            </div>
+          </div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-debug"></div>
+          </div>
+          <div class="hidden md:block order-3"></div>
+        </div>
+
+        <!-- EVENT 14 — ECOSYSTEM -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="hidden md:block md:col-start-1 order-1"></div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-feature"></div>
+          </div>
+          <div class="md:col-start-3 md:pl-8 order-2 md:order-3 flex-1">
+            <div class="timeline-card type-feature from-right" data-side="right">
+              <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="text-lg">⛓️</span>
+                <span class="badge badge-ecosystem">Ecosystem</span>
+                <span class="text-muted font-mono text-xs">19:11 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">Sage Wallet joins the App Store</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                Sage Wallet — the premier Chia blockchain wallet — added to the OpenTang registry with a dedicated Crypto category. First third-party desktop app integration.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENT 15 — FIX -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="md:col-start-1 md:pr-8 md:text-right order-2 md:order-1 flex-1">
+            <div class="timeline-card type-fix from-left" data-side="left">
+              <div class="flex items-center gap-2 mb-2 md:justify-end flex-wrap">
+                <span class="text-lg">🔧</span>
+                <span class="badge badge-fix">Fix</span>
+                <span class="text-muted font-mono text-xs">21:32 PM</span>
+              </div>
+              <h3 class="font-bold text-base mb-1.5">macOS Docker PATH bug resolved</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                Discovered: macOS GUI apps inherit a minimal PATH that excludes /usr/local/bin. OpenTang now searches 5 common Docker install locations. 96GB RAM now reports correctly too.
+              </p>
+            </div>
+          </div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-fix"></div>
+          </div>
+          <div class="hidden md:block order-3"></div>
+        </div>
+
+        <!-- EVENT 16 — v0.1.1 FINAL -->
+        <div class="timeline-event flex items-start gap-4 md:gap-0 md:grid md:grid-cols-[1fr_80px_1fr]">
+          <div class="hidden md:block md:col-start-1 order-1"></div>
+          <div class="flex flex-col items-center order-1 md:order-2 pt-3">
+            <div class="timeline-node node-milestone" style="width:24px;height:24px; box-shadow: 0 0 0 6px rgba(249,115,22,0.3), 0 0 30px rgba(249,115,22,0.8);"></div>
+          </div>
+          <div class="md:col-start-3 md:pl-8 order-2 md:order-3 flex-1">
+            <div class="timeline-card final-card from-right" data-side="right">
+              <div class="flex items-center gap-2 mb-2 flex-wrap">
+                <span class="text-lg">🛡️</span>
+                <span class="badge badge-milestone">v0.1.1</span>
+                <span class="text-muted font-mono text-xs">02:32 AM (+1)</span>
+              </div>
+              <h3 class="font-bold text-lg mb-2">Pre-install detection ships</h3>
+              <p class="text-muted text-sm leading-relaxed">
+                v0.1.1: OpenTang now scans running Docker containers before install. Existing services are detected, their ports imported, and they are skipped from reinstall — with a Force Reinstall override for power users.
+              </p>
+              <div class="mt-3 flex items-center gap-3">
+                <span class="commit-hash">ca2c510</span>
+                <span class="text-xs text-orange font-mono font-bold">LATEST RELEASE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /space-y -->
+    </div><!-- /timeline -->
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       BY THE NUMBERS
+  ═══════════════════════════════════════ -->
+  <section class="bg-surface border-t border-b border-border py-24 px-4 sm:px-6 mt-16">
+    <div class="max-w-5xl mx-auto">
+      <div class="section-fade text-center mb-16">
+        <h2 class="section-heading mb-3">By the numbers.</h2>
+        <p class="text-muted">Everything that shipped in one day.</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+        <div class="stat-item text-center" data-delay="0">
+          <div class="stat-number scroll-counter" data-target="47">0</div>
+          <div class="text-muted text-sm mt-2 font-mono">Total commits</div>
+        </div>
+        <div class="stat-item text-center" data-delay="1">
+          <div class="stat-number text-orange" style="font-size: clamp(1.8rem, 3.5vw, 3rem);">14h 58m</div>
+          <div class="text-muted text-sm mt-2 font-mono">Idea to live product</div>
+        </div>
+        <div class="stat-item text-center" data-delay="2">
+          <div class="stat-number scroll-counter" data-target="517">0</div>
+          <div class="text-muted text-sm mt-2 font-mono">Rust crates compiled</div>
+        </div>
+        <div class="stat-item text-center" data-delay="3">
+          <div class="stat-number scroll-counter" data-target="4">0</div>
+          <div class="text-muted text-sm mt-2 font-mono">Platforms supported</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div class="stat-item text-center" data-delay="4">
+          <div class="stat-number scroll-counter" data-target="14">0</div>
+          <div class="text-muted text-sm mt-2 font-mono">Services in registry</div>
+        </div>
+        <div class="stat-item text-center" data-delay="5">
+          <div class="stat-number scroll-counter" data-target="9">0</div>
+          <div class="text-muted text-sm mt-2 font-mono">Wizard steps</div>
+        </div>
+        <div class="stat-item text-center" data-delay="6">
+          <div class="stat-number text-orange">100+</div>
+          <div class="text-muted text-sm mt-2 font-mono">Tasks in build checklist</div>
+        </div>
+        <div class="stat-item text-center" data-delay="7">
+          <div class="stat-number scroll-counter" data-target="3">0</div>
+          <div class="text-muted text-sm mt-2 font-mono">Crew members</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       THE VERDICT
+  ═══════════════════════════════════════ -->
+  <section class="verdict-bg py-28 px-4 sm:px-6">
+    <div class="max-w-3xl mx-auto text-center">
+      <div class="section-fade">
+        <blockquote class="text-3xl sm:text-4xl md:text-5xl font-black italic leading-tight tracking-tight mb-10 text-text">
+          "Stop renting your tools. Own your stack. We built the on-ramp —
+          <span class="orange-text-gradient"> in a day."</span>
+        </blockquote>
+        <p class="text-muted text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
+          This is what AI-native development looks like in 2026. Not autocomplete. Not code generation. A full crew. A shared mission. A shipped product.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="https://github.com/Koba42Corp/opentang/releases/latest" target="_blank" rel="noopener" class="btn-orange text-center">
+            Download OpenTang
+          </a>
+          <a href="#" class="btn-ghost text-center">
+            Read the Full Story on Medium
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════ -->
+  <footer class="border-t border-border bg-surface py-10 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <img src="https://api.dracattus.com/v1/files/koba42/7aa3f80c1d48124b659ee1c7908d0920_logo-no-text.png"
+             alt="OpenTang mark" class="w-6 h-6 object-contain opacity-80" />
+        <span class="text-muted text-sm">© 2026 Koba42 Corp. All rights reserved.</span>
+      </div>
+      <div class="flex items-center gap-6 text-sm text-muted">
+        <a href="/" class="hover:text-text transition-colors">Home</a>
+        <a href="https://github.com/Koba42Corp/opentang" target="_blank" rel="noopener" class="hover:text-text transition-colors">GitHub</a>
+        <a href="/eula.html" class="hover:text-text transition-colors">EULA</a>
+        <a href="/tos.html" class="hover:text-text transition-colors">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════
+       JAVASCRIPT
+  ═══════════════════════════════════════ -->
+  <script>
+    // ── EASING ──────────────────────────────
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function animateCounter(el, target, duration = 1400) {
+      const start = performance.now();
+      const update = (now) => {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const value = Math.round(easeOutCubic(progress) * target);
+        el.textContent = value.toLocaleString();
+        if (progress < 1) requestAnimationFrame(update);
+      };
+      requestAnimationFrame(update);
+    }
+
+    // ── HERO INIT ───────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      // Trigger hero stat counters
+      const heroStats = document.querySelectorAll('.hero-stat');
+      heroStats.forEach((el, i) => {
+        setTimeout(() => {
+          el.classList.add('visible');
+          const counter = el.querySelector('.counter');
+          if (counter) {
+            const target = parseInt(counter.dataset.target);
+            animateCounter(counter, target, 1200);
+          }
+        }, 200 + i * 200);
+      });
+
+      // Trigger hero text lines
+      const heroLines = document.querySelectorAll('.hero-line');
+      heroLines.forEach((el, i) => {
+        const delay = parseFloat(el.style.transitionDelay) * 1000 || i * 200;
+        setTimeout(() => el.classList.add('visible'), delay);
+      });
+    });
+
+    // ── INTERSECTION OBSERVER ───────────────
+    const observerOptions = {
+      threshold: 0.15,
+      rootMargin: '0px 0px -40px 0px',
+    };
+
+    // Section fade-ins
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          sectionObserver.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.section-fade').forEach(el => sectionObserver.observe(el));
+
+    // Crew cards
+    const crewObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const delay = parseFloat(entry.target.style.transitionDelay) * 1000 || 0;
+          setTimeout(() => entry.target.classList.add('visible'), delay);
+          crewObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.crew-card').forEach(el => crewObserver.observe(el));
+
+    // Timeline cards
+    const timelineObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          timelineObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+
+    document.querySelectorAll('.timeline-card').forEach(el => timelineObserver.observe(el));
+
+    // Stats count-up on scroll
+    let statsAnimated = false;
+    const statsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !statsAnimated) {
+          statsAnimated = true;
+
+          document.querySelectorAll('.stat-item').forEach((el, i) => {
+            const delay = parseInt(el.dataset.delay || '0') * 100;
+            setTimeout(() => {
+              el.classList.add('visible');
+              const counter = el.querySelector('.scroll-counter');
+              if (counter) {
+                const target = parseInt(counter.dataset.target);
+                animateCounter(counter, target, 1200);
+              }
+            }, delay);
+          });
+
+          statsObserver.disconnect();
+        }
+      });
+    }, { threshold: 0.2 });
+
+    const statsSection = document.querySelector('.stat-item');
+    if (statsSection) statsObserver.observe(statsSection.closest('section') || statsSection);
+
+    // Verdict section
+    const verdictObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          verdictObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.verdict-bg .section-fade').forEach(el => verdictObserver.observe(el));
+  </script>
+
+</body>
+</html>
