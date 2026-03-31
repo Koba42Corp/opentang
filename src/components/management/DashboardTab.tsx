@@ -22,7 +22,7 @@ interface VersionInfo {
   releaseNotes?: string;
 }
 
-const CURRENT_VERSION = "0.1.0";
+const CURRENT_VERSION = "0.1.1";
 
 function semverGreater(a: string, b: string): boolean {
   const parse = (v: string) => v.replace(/[^0-9.]/g, "").split(".").map(Number);
