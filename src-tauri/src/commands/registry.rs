@@ -128,6 +128,22 @@ fn service_yaml(id: &str) -> Option<String> {
     networks:
       - opentang
 "#.to_string(),
+        "ipfs" => r#"  ipfs:
+    image: ipfs/kubo:latest
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+      - "4001:4001"
+      - "4001:4001/udp"
+      - "8080:8080"
+    volumes:
+      - ipfs_data:/data/ipfs
+      - ipfs_staging:/export
+    environment:
+      - IPFS_PROFILE=server
+    networks:
+      - opentang
+"#.to_string(),
         _ => return None,
     };
     Some(yaml)
@@ -140,6 +156,7 @@ fn volume_for_service(id: &str) -> Option<&'static str> {
         "vaultwarden" => Some("  vaultwarden_data:\n"),
         "nextcloud" => Some("  nextcloud_data:\n"),
         "searxng" => Some("  searxng_data:\n"),
+        "ipfs" => Some("  ipfs_data:\n  ipfs_staging:\n"),
         _ => None,
     }
 }

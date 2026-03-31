@@ -32,6 +32,7 @@ const PACKAGES: PkgDef[] = [
   { id: "vaultwarden", name: "Vaultwarden", description: "Password manager", ramMb: 64, diskMb: 250, tier: "tier2" },
   { id: "nextcloud", name: "Nextcloud", description: "Cloud storage", ramMb: 512, diskMb: 2000, tier: "tier2" },
   { id: "searxng", name: "SearXNG", description: "Private search", ramMb: 256, diskMb: 500, tier: "tier2" },
+  { id: "ipfs", name: "IPFS (Kubo)", description: "Decentralized file storage", ramMb: 512, diskMb: 10240, tier: "tier2" },
 ];
 
 const CORE_IDS = PACKAGES.filter((p) => p.tier === "core").map((p) => p.id);

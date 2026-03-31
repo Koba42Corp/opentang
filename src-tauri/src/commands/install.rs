@@ -432,6 +432,29 @@ fn build_compose(config: &InstallConfig) -> String {
         ));
     }
 
+    // ── IPFS (Kubo) ──────────────────────────────────────────────────────────
+    if config.packages.iter().any(|p| p == "ipfs") && !config.excluded_packages.contains(&"ipfs".to_string()) {
+        volumes.push_str("  ipfs_data:\n  ipfs_staging:\n");
+        services.push_str(&format!(
+            "  ipfs:\n\
+             image: ipfs/kubo:latest\n\
+             restart: unless-stopped\n\
+             ports:\n\
+               - \"5001:5001\"\n\
+               - \"4001:4001\"\n\
+               - \"4001:4001/udp\"\n\
+               - \"8080:8080\"\n\
+             environment:\n\
+               - IPFS_PROFILE=server\n\
+{labels}    volumes:\n\
+               - ipfs_data:/data/ipfs\n\
+               - ipfs_staging:/export\n\
+             networks:\n\
+               - opentang\n",
+            labels = traefik_labels_block("ipfs", internet),
+        ));
+    }
+
     // ── Edition service (openclaw / hermes / nanoclaw) ───────────────────────
     if !config.excluded_packages.contains(&"openclaw".to_string()) {
         let edition_image = "linuxserver/heimdall:latest";
@@ -563,6 +586,7 @@ fn extract_service_name(line: &str) -> Option<&'static str> {
         "vaultwarden",
         "nextcloud",
         "searxng",
+        "ipfs",
         "traefik",
     ];
     KNOWN.iter().find(|&&svc| lower.contains(svc)).copied()

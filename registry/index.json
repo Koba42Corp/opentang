@@ -8,7 +8,11 @@
       "version": "4.x",
       "description": "Self-hosted PaaS. Deploy apps, databases, and services with zero config.",
       "category": "infrastructure",
-      "tags": ["paas", "deployment", "docker"],
+      "tags": [
+        "paas",
+        "deployment",
+        "docker"
+      ],
       "icon": "server",
       "min_ram_mb": 512,
       "min_disk_gb": 2,
@@ -24,7 +28,11 @@
       "version": "latest",
       "description": "Full-featured AI agent system. The backbone of your personal AI stack.",
       "category": "ai",
-      "tags": ["ai", "agent", "llm"],
+      "tags": [
+        "ai",
+        "agent",
+        "llm"
+      ],
       "icon": "bot",
       "min_ram_mb": 512,
       "min_disk_gb": 2,
@@ -40,7 +48,11 @@
       "version": "latest",
       "description": "Balanced AI agent for home lab and team use.",
       "category": "ai",
-      "tags": ["ai", "agent", "llm"],
+      "tags": [
+        "ai",
+        "agent",
+        "llm"
+      ],
       "icon": "bot",
       "min_ram_mb": 256,
       "min_disk_gb": 1,
@@ -55,7 +67,11 @@
       "version": "latest",
       "description": "Lightweight AI agent. Runs on minimal hardware.",
       "category": "ai",
-      "tags": ["ai", "agent", "lightweight"],
+      "tags": [
+        "ai",
+        "agent",
+        "lightweight"
+      ],
       "icon": "zap",
       "min_ram_mb": 128,
       "min_disk_gb": 1,
@@ -70,7 +86,11 @@
       "version": "latest",
       "description": "Run large language models locally. Supports Llama, Mistral, Gemma and more.",
       "category": "ai",
-      "tags": ["llm", "local-ai", "ollama"],
+      "tags": [
+        "llm",
+        "local-ai",
+        "ollama"
+      ],
       "icon": "cpu",
       "min_ram_mb": 4096,
       "min_disk_gb": 10,
@@ -85,7 +105,11 @@
       "version": "latest",
       "description": "Private Git server. Your own GitHub, self-hosted.",
       "category": "development",
-      "tags": ["git", "code", "vcs"],
+      "tags": [
+        "git",
+        "code",
+        "vcs"
+      ],
       "icon": "git-branch",
       "min_ram_mb": 256,
       "min_disk_gb": 1,
@@ -100,7 +124,11 @@
       "version": "latest",
       "description": "Docker management UI. Manage containers, images, volumes and networks.",
       "category": "infrastructure",
-      "tags": ["docker", "containers", "management"],
+      "tags": [
+        "docker",
+        "containers",
+        "management"
+      ],
       "icon": "layout-dashboard",
       "min_ram_mb": 128,
       "min_disk_gb": 1,
@@ -115,7 +143,11 @@
       "version": "latest",
       "description": "Beautiful monitoring dashboards. Visualize metrics, logs, and traces.",
       "category": "monitoring",
-      "tags": ["monitoring", "dashboards", "metrics"],
+      "tags": [
+        "monitoring",
+        "dashboards",
+        "metrics"
+      ],
       "icon": "bar-chart-2",
       "min_ram_mb": 256,
       "min_disk_gb": 1,
@@ -130,7 +162,11 @@
       "version": "latest",
       "description": "Metrics collection and alerting. Works best with Grafana.",
       "category": "monitoring",
-      "tags": ["monitoring", "metrics", "alerting"],
+      "tags": [
+        "monitoring",
+        "metrics",
+        "alerting"
+      ],
       "icon": "activity",
       "min_ram_mb": 256,
       "min_disk_gb": 1,
@@ -145,7 +181,11 @@
       "version": "latest",
       "description": "Workflow automation with 400+ integrations. Your self-hosted Zapier.",
       "category": "automation",
-      "tags": ["automation", "workflows", "integrations"],
+      "tags": [
+        "automation",
+        "workflows",
+        "integrations"
+      ],
       "icon": "git-merge",
       "min_ram_mb": 512,
       "min_disk_gb": 1,
@@ -160,7 +200,11 @@
       "version": "latest",
       "description": "Self-hosted uptime monitoring. Get notified when services go down.",
       "category": "monitoring",
-      "tags": ["uptime", "monitoring", "alerts"],
+      "tags": [
+        "uptime",
+        "monitoring",
+        "alerts"
+      ],
       "icon": "heart-pulse",
       "min_ram_mb": 128,
       "min_disk_gb": 1,
@@ -175,7 +219,11 @@
       "version": "latest",
       "description": "Self-hosted Bitwarden-compatible password manager.",
       "category": "security",
-      "tags": ["passwords", "security", "bitwarden"],
+      "tags": [
+        "passwords",
+        "security",
+        "bitwarden"
+      ],
       "icon": "lock",
       "min_ram_mb": 64,
       "min_disk_gb": 1,
@@ -185,12 +233,45 @@
       "compose_service": "vaultwarden"
     },
     {
+      "id": "ipfs",
+      "name": "IPFS (Kubo)",
+      "version": "latest",
+      "description": "Decentralized file storage and content-addressed networking. Run your own IPFS node with the official Kubo implementation.",
+      "category": "storage",
+      "tags": [
+        "ipfs",
+        "decentralized",
+        "p2p",
+        "storage",
+        "web3"
+      ],
+      "icon": "\ud83c\udf10",
+      "ports": [
+        5001,
+        4001,
+        8080
+      ],
+      "resources": {
+        "ram_mb": 512,
+        "disk_gb": 10
+      },
+      "install_type": "docker",
+      "homepage": "https://ipfs.tech",
+      "docs": "https://docs.ipfs.tech/install/run-ipfs-inside-docker/",
+      "featured": false
+    },
+    {
       "id": "nextcloud",
       "name": "Nextcloud",
       "version": "latest",
       "description": "Self-hosted cloud storage, calendar, contacts, and office suite.",
       "category": "productivity",
-      "tags": ["storage", "cloud", "files", "calendar"],
+      "tags": [
+        "storage",
+        "cloud",
+        "files",
+        "calendar"
+      ],
       "icon": "cloud",
       "min_ram_mb": 512,
       "min_disk_gb": 5,
@@ -205,7 +286,11 @@
       "version": "latest",
       "description": "Private metasearch engine. Search the web without being tracked.",
       "category": "productivity",
-      "tags": ["search", "privacy", "metasearch"],
+      "tags": [
+        "search",
+        "privacy",
+        "metasearch"
+      ],
       "icon": "search",
       "min_ram_mb": 256,
       "min_disk_gb": 1,
@@ -220,7 +305,15 @@
       "version": "latest",
       "description": "The premier Chia blockchain wallet. Light wallet with WalletConnect, NFTs, CATs, DIDs, and full offer file support.",
       "category": "crypto",
-      "tags": ["chia", "crypto", "wallet", "blockchain", "xch", "nft", "defi"],
+      "tags": [
+        "chia",
+        "crypto",
+        "wallet",
+        "blockchain",
+        "xch",
+        "nft",
+        "defi"
+      ],
       "icon": "wallet",
       "min_ram_mb": 256,
       "min_disk_gb": 1,
