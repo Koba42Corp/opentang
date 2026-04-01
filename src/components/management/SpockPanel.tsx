@@ -149,23 +149,28 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
       </p>
       <div className="flex flex-col gap-2">
         <button onClick={() => handleLogin(false)} disabled={loginLoading}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-ot-orange hover:bg-orange-400 disabled:opacity-50 rounded-lg text-black text-sm font-semibold transition-colors">
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+          style={{ backgroundColor: '#F97316', color: '#000000' }}>
           {loginLoading ? <Loader className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
           Connect Claude Account (Subscription)
         </button>
         <button onClick={() => handleLogin(true)} disabled={loginLoading}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-ot-elevated hover:bg-ot-border border border-ot-border rounded-lg text-ot-text text-sm font-medium transition-colors">
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          style={{ backgroundColor: '#2A2A32', color: '#F8F8F8', border: '1px solid #4A4A58' }}>
           <Key className="w-3.5 h-3.5" />
           Use API Key (Console)
         </button>
       </div>
       {loginError && (
-        <div className="mt-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400 leading-relaxed">
-          ⚠️ {loginError}
-          {loginError.includes("not found") && (
-            <div className="mt-1.5 text-ot-text-muted">
-              Install Claude Code first:{" "}
-              <code className="font-mono text-ot-orange">npm install -g @anthropic-ai/claude-code</code>
+        <div className="mt-3 p-3 rounded-lg text-xs leading-relaxed" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
+          <div className="font-medium mb-1">⚠️ Could not launch login</div>
+          <div style={{ color: '#8B8B9A' }}>{loginError}</div>
+          {(loginError.includes("not found") || loginError.includes("binary")) && (
+            <div className="mt-2 p-2 rounded" style={{ backgroundColor: 'rgba(0,0,0,0.3)', color: '#8B8B9A' }}>
+              The AI binary hasn't been bundled yet in this build.<br />
+              To use now, install Claude Code manually:<br />
+              <code style={{ color: '#F97316' }}>npm install -g @anthropic-ai/claude-code</code><br />
+              then restart OpenTang.
             </div>
           )}
         </div>
