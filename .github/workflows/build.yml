@@ -76,6 +76,19 @@ jobs:
       - name: Install frontend deps
         run: npm ci
 
+      - name: Build Spock sidecar binary
+        run: |
+          git clone --depth=1 https://github.com/Koba42Corp/spock spock-src
+          cd spock-src/src-rust
+          cargo build --release --bin claude
+          mkdir -p ../../src-tauri/binaries
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp target/release/claude.exe ../../src-tauri/binaries/spock-${{ matrix.target }}.exe
+          else
+            cp target/release/claude ../../src-tauri/binaries/spock-${{ matrix.target }}
+          fi
+        shell: bash
+
       - name: Build
         uses: tauri-apps/tauri-action@v0.5.18
         env:
