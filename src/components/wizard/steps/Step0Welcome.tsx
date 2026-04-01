@@ -27,7 +27,7 @@ export default function Step0Welcome() {
         {/* Version badge */}
         <span className="inline-flex items-center gap-1.5 px-3 py-1 mb-10 rounded-full bg-ot-elevated border border-ot-border text-ot-orange-500 text-xs font-mono tracking-wider">
           <span className="w-1.5 h-1.5 rounded-full bg-ot-orange-500 animate-orange-pulse" />
-          v0.1.0 — Early Access
+          v0.2.0-beta
         </span>
 
         {/* Logo / Title */}

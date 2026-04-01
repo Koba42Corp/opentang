@@ -1,6 +1,6 @@
 {
   "name": "opentang",
-  "version": "0.1.1",
+  "version": "0.2.0-beta",
   "description": "OpenTang - Your stack. Your rules. The open-source self-hosted AI + developer environment bootstrapper.",
   "private": true,
   "scripts": {

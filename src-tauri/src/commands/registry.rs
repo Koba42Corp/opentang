@@ -23,12 +23,23 @@ pub struct Package {
     pub icon: String,
     pub min_ram_mb: u64,
     pub min_disk_gb: serde_json::Value,
-    pub port: u64,
+    #[serde(default)]
+    pub port: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url_path: Option<String>,
+    #[serde(default)]
     pub koba42_featured: bool,
+    #[serde(default)]
     pub official: bool,
-    pub compose_service: String,
+    #[serde(default)]
+    pub compose_service: Option<String>,
+    // Desktop-app packages (not Docker)
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub install_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub download_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub source_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]

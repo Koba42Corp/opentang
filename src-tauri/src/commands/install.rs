@@ -122,23 +122,56 @@ fn cred_pw(credentials: &HashMap<String, CredentialPair>, key: &str) -> String {
         .unwrap_or_else(|| gen_password(24))
 }
 
-/// Normalize YAML: collapse consecutive blank lines.
+/// Normalize YAML: collapse consecutive blank lines and ensure every non-blank
+/// line inside a `services:` block has at least 4 spaces of indentation (the
+/// service-key line gets exactly 2, its children get 4+).
 fn clean_yaml(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut prev_blank = false;
+    let mut in_services = false;
     for line in s.lines() {
         if line.trim().is_empty() {
             if !prev_blank {
                 out.push('\n');
             }
             prev_blank = true;
-        } else {
+            continue;
+        }
+        prev_blank = false;
+        // Detect services: section start
+        if line.starts_with("services:") {
+            in_services = true;
             out.push_str(line);
             out.push('\n');
-            prev_blank = false;
+            continue;
         }
+        if in_services && !line.starts_with(' ') && !line.starts_with('#') {
+            in_services = false; // left the services block
+        }
+        out.push_str(line);
+        out.push('\n');
     }
     out
+}
+
+/// Append a service block to the services string, ensuring every line is
+/// correctly indented under the service key (2 spaces for key, 4+ for children).
+fn push_service(services: &mut String, block: &str) {
+    for line in block.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        // Already correctly indented (starts with spaces)?  Keep it.
+        if line.starts_with("  ") {
+            services.push_str(line);
+        } else {
+            // Needs indentation — add 4 spaces (child of service key)
+            services.push_str("    ");
+            services.push_str(trimmed);
+        }
+        services.push('\n');
+    }
 }
 
 /// Build the docker-compose.yml string from config.
@@ -178,306 +211,278 @@ fn build_compose(config: &InstallConfig) -> String {
     // ── Coolify ──────────────────────────────────────────────────────────────
     if !config.excluded_packages.contains(&"coolify".to_string()) {
         let coolify_port = config.detected_ports.get("coolify").copied().unwrap_or(8000);
-        services.push_str(&format!(
-            "  coolify:\n\
-                 image: coollabsio/coolify:latest\n\
-                 restart: unless-stopped\n\
-                 ports:\n\
-                   - \"{coolify_port}:8000\"\n\
-                   - \"6001:6001\"\n\
-                 environment:\n\
-                   APP_ID: opentang\n\
-                   APP_KEY: base64:${{APP_KEY}}\n\
-                   DB_PASSWORD: ${{COOLIFY_DB_PASSWORD}}\n\
-                   REDIS_PASSWORD: ${{REDIS_PASSWORD}}\n\
-                 volumes:\n\
-                   - /var/run/docker.sock:/var/run/docker.sock\n\
-                   - coolify_data:/data/coolify\n\
-{labels}    networks:\n\
-                   - opentang\n",
-            coolify_port = coolify_port,
-            labels = traefik_labels_block("coolify", internet),
-        ));
+        let labels = traefik_labels_block("coolify", internet);
+        push_service(&mut services, &format!(r#"  coolify:
+    image: coollabsio/coolify:latest
+    restart: unless-stopped
+    ports:
+      - "{coolify_port}:8000"
+      - "6001:6001"
+    environment:
+      APP_ID: opentang
+      APP_KEY: base64:${{APP_KEY}}
+      DB_PASSWORD: ${{COOLIFY_DB_PASSWORD}}
+      REDIS_PASSWORD: ${{REDIS_PASSWORD}}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - coolify_data:/data/coolify
+{labels}    networks:
+      - opentang
+"#));
     }
 
     // ── Portainer ────────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "portainer") && !config.excluded_packages.contains(&"portainer".to_string()) {
         let portainer_port = config.detected_ports.get("portainer").copied().unwrap_or(9000);
+        let labels = traefik_labels_block("portainer", internet);
         volumes.push_str("  portainer_data:\n");
-        services.push_str(&format!(
-            "  portainer:\n\
-                 image: portainer/portainer-ce:latest\n\
-                 restart: unless-stopped\n\
-                 ports:\n\
-               - \"{portainer_port}:9000\"\n\
-                 volumes:\n\
-               - /var/run/docker.sock:/var/run/docker.sock\n\
-               - portainer_data:/data\n\
-{labels}    networks:\n\
-               - opentang\n",
-            portainer_port = portainer_port,
-            labels = traefik_labels_block("portainer", internet),
-        ));
+        push_service(&mut services, &format!(r#"  portainer:
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    ports:
+      - "{portainer_port}:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+{labels}    networks:
+      - opentang
+"#));
     }
 
     // ── Gitea ────────────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "gitea") && !config.excluded_packages.contains(&"gitea".to_string()) {
         let gitea_port = config.detected_ports.get("gitea").copied().unwrap_or(3100);
+        let labels = traefik_labels_block("gitea", internet);
         volumes.push_str("  gitea_data:\n");
-        services.push_str(&format!(
-            "  gitea:\n\
-                 image: gitea/gitea:latest\n\
-                 restart: unless-stopped\n\
-                 ports:\n\
-               - \"{gitea_port}:3000\"\n\
-               - \"222:22\"\n\
-                 environment:\n\
-               USER_UID: 1000\n\
-               USER_GID: 1000\n\
-               GITEA__security__INSTALL_LOCK: \"true\"\n\
-               GITEA_ADMIN_USER: ${{GITEA_ADMIN_USER}}\n\
-               GITEA_ADMIN_PASSWORD: ${{GITEA_ADMIN_PASSWORD}}\n\
-               GITEA_ADMIN_EMAIL: admin@localhost\n\
-{labels}    volumes:\n\
-               - gitea_data:/data\n\
-             networks:\n\
-               - opentang\n",
-            gitea_port = gitea_port,
-            labels = traefik_labels_block("gitea", internet),
-        ));
+        push_service(&mut services, &format!(r#"  gitea:
+    image: gitea/gitea:latest
+    restart: unless-stopped
+    ports:
+      - "{gitea_port}:3000"
+      - "222:22"
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+      GITEA__security__INSTALL_LOCK: "true"
+      GITEA_ADMIN_USER: ${{GITEA_ADMIN_USER}}
+      GITEA_ADMIN_PASSWORD: ${{GITEA_ADMIN_PASSWORD}}
+      GITEA_ADMIN_EMAIL: admin@localhost
+{labels}    volumes:
+      - gitea_data:/data
+    networks:
+      - opentang
+"#));
     }
 
     // ── Grafana ──────────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "grafana") && !config.excluded_packages.contains(&"grafana".to_string()) {
         let grafana_port = config.detected_ports.get("grafana").copied().unwrap_or(3001);
+        let labels = traefik_labels_block("grafana", internet);
         volumes.push_str("  grafana_data:\n");
-        services.push_str(&format!(
-            "  grafana:\n\
-                 image: grafana/grafana:latest\n\
-                 restart: unless-stopped\n\
-                 ports:\n\
-               - \"{grafana_port}:3000\"\n\
-             environment:\n\
-               GF_SECURITY_ADMIN_USER: ${{GF_SECURITY_ADMIN_USER}}\n\
-               GF_SECURITY_ADMIN_PASSWORD: ${{GF_SECURITY_ADMIN_PASSWORD}}\n\
-{labels}    volumes:\n\
-               - grafana_data:/var/lib/grafana\n\
-             networks:\n\
-               - opentang\n",
-            grafana_port = grafana_port,
-            labels = traefik_labels_block("grafana", internet),
-        ));
+        push_service(&mut services, &format!(r#"  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - "{grafana_port}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${{GF_SECURITY_ADMIN_USER}}
+      GF_SECURITY_ADMIN_PASSWORD: ${{GF_SECURITY_ADMIN_PASSWORD}}
+{labels}    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - opentang
+"#));
     }
 
     // ── Prometheus ───────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "prometheus") && !config.excluded_packages.contains(&"prometheus".to_string()) {
         let prometheus_port = config.detected_ports.get("prometheus").copied().unwrap_or(9090);
+        let labels = traefik_labels_block("prometheus", internet);
         volumes.push_str("  prometheus_data:\n");
-        services.push_str(&format!(
-            "  prometheus:\n\
-             image: prom/prometheus:latest\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"{prometheus_port}:9090\"\n\
-{labels}    volumes:\n\
-               - prometheus_data:/prometheus\n\
-             networks:\n\
-               - opentang\n",
-            prometheus_port = prometheus_port,
-            labels = traefik_labels_block("prometheus", internet),
-        ));
+        push_service(&mut services, &format!(r#"  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    ports:
+      - "{prometheus_port}:9090"
+{labels}    volumes:
+      - prometheus_data:/prometheus
+    networks:
+      - opentang
+"#));
     }
 
     // ── Ollama (local LLM) ───────────────────────────────────────────────────
     if config.llm_mode == "local" && !config.excluded_packages.contains(&"ollama".to_string()) {
         let ollama_port = config.detected_ports.get("ollama").copied().unwrap_or(11434);
         volumes.push_str("  ollama_data:\n");
-        services.push_str(&format!(
-            "  ollama:\n\
-             image: ollama/ollama:latest\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"{ollama_port}:11434\"\n\
-             volumes:\n\
-               - ollama_data:/root/.ollama\n\
-             networks:\n\
-               - opentang\n",
-            ollama_port = ollama_port,
-        ));
+        push_service(&mut services, &format!(r#"  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "{ollama_port}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - opentang
+"#));
     }
 
     // ── n8n ──────────────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "n8n") && !config.excluded_packages.contains(&"n8n".to_string()) {
         let n8n_port = config.detected_ports.get("n8n").copied().unwrap_or(5678);
+        let labels = traefik_labels_block("n8n", internet);
         volumes.push_str("  n8n_data:\n");
-        services.push_str(&format!(
-            "  n8n:\n\
-             image: n8nio/n8n:latest\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"{n8n_port}:5678\"\n\
-             environment:\n\
-               N8N_BASIC_AUTH_ACTIVE: \"true\"\n\
-               N8N_BASIC_AUTH_USER: ${{N8N_USER}}\n\
-               N8N_BASIC_AUTH_PASSWORD: ${{N8N_PASSWORD}}\n\
-               N8N_HOST: ${{DOMAIN:-localhost}}\n\
-               WEBHOOK_URL: http://${{DOMAIN:-localhost}}:{n8n_port}\n\
-{labels}    volumes:\n\
-               - n8n_data:/home/node/.n8n\n\
-             networks:\n\
-               - opentang\n",
-            n8n_port = n8n_port,
-            labels = traefik_labels_block("n8n", internet),
-        ));
+        push_service(&mut services, &format!(r#"  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "{n8n_port}:5678"
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${{N8N_USER}}
+      N8N_BASIC_AUTH_PASSWORD: ${{N8N_PASSWORD}}
+      N8N_HOST: ${{DOMAIN:-localhost}}
+      WEBHOOK_URL: http://${{DOMAIN:-localhost}}:{n8n_port}
+{labels}    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - opentang
+"#));
     }
 
     // ── Uptime Kuma ──────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "uptime-kuma") && !config.excluded_packages.contains(&"uptime-kuma".to_string()) {
         let uptime_port = config.detected_ports.get("uptime-kuma").copied().unwrap_or(3003);
+        let labels = traefik_labels_block("uptime-kuma", internet);
         volumes.push_str("  uptime_kuma_data:\n");
-        services.push_str(&format!(
-            "  uptime-kuma:\n\
-             image: louislam/uptime-kuma:latest\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"{uptime_port}:3001\"\n\
-{labels}    volumes:\n\
-               - uptime_kuma_data:/app/data\n\
-             networks:\n\
-               - opentang\n",
-            uptime_port = uptime_port,
-            labels = traefik_labels_block("uptime-kuma", internet),
-        ));
+        push_service(&mut services, &format!(r#"  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    restart: unless-stopped
+    ports:
+      - "{uptime_port}:3001"
+{labels}    volumes:
+      - uptime_kuma_data:/app/data
+    networks:
+      - opentang
+"#));
     }
 
     // ── Vaultwarden ──────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "vaultwarden") && !config.excluded_packages.contains(&"vaultwarden".to_string()) {
         let vaultwarden_port = config.detected_ports.get("vaultwarden").copied().unwrap_or(8080);
+        let labels = traefik_labels_block("vaultwarden", internet);
         volumes.push_str("  vaultwarden_data:\n");
-        services.push_str(&format!(
-            "  vaultwarden:\n\
-             image: vaultwarden/server:latest\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"{vaultwarden_port}:80\"\n\
-             environment:\n\
-               ADMIN_TOKEN: ${{VAULTWARDEN_ADMIN_TOKEN}}\n\
-{labels}    volumes:\n\
-               - vaultwarden_data:/data\n\
-             networks:\n\
-               - opentang\n",
-            vaultwarden_port = vaultwarden_port,
-            labels = traefik_labels_block("vaultwarden", internet),
-        ));
+        push_service(&mut services, &format!(r#"  vaultwarden:
+    image: vaultwarden/server:latest
+    restart: unless-stopped
+    ports:
+      - "{vaultwarden_port}:80"
+    environment:
+      ADMIN_TOKEN: ${{VAULTWARDEN_ADMIN_TOKEN}}
+{labels}    volumes:
+      - vaultwarden_data:/data
+    networks:
+      - opentang
+"#));
     }
 
     // ── Nextcloud ────────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "nextcloud") && !config.excluded_packages.contains(&"nextcloud".to_string()) {
         let nextcloud_port = config.detected_ports.get("nextcloud").copied().unwrap_or(8081);
+        let labels = traefik_labels_block("nextcloud", internet);
         volumes.push_str("  nextcloud_data:\n  nextcloud_db:\n");
-        services.push_str(
-            "  nextcloud-db:\n\
-             image: mariadb:11\n\
-             restart: unless-stopped\n\
-             environment:\n\
-               MYSQL_ROOT_PASSWORD: ${NEXTCLOUD_DB_ROOT_PASSWORD}\n\
-               MYSQL_DATABASE: nextcloud\n\
-               MYSQL_USER: nextcloud\n\
-               MYSQL_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}\n\
-             volumes:\n\
-               - nextcloud_db:/var/lib/mysql\n\
-             networks:\n\
-               - opentang\n",
-        );
-        services.push_str(&format!(
-            "  nextcloud:\n\
-             image: nextcloud:latest\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"{nextcloud_port}:80\"\n\
-             depends_on:\n\
-               - nextcloud-db\n\
-             environment:\n\
-               MYSQL_HOST: nextcloud-db\n\
-               MYSQL_DATABASE: nextcloud\n\
-               MYSQL_USER: nextcloud\n\
-               MYSQL_PASSWORD: ${{NEXTCLOUD_DB_PASSWORD}}\n\
-               NEXTCLOUD_ADMIN_USER: ${{NEXTCLOUD_ADMIN_USER}}\n\
-               NEXTCLOUD_ADMIN_PASSWORD: ${{NEXTCLOUD_ADMIN_PASSWORD}}\n\
-{labels}    volumes:\n\
-               - nextcloud_data:/var/www/html\n\
-             networks:\n\
-               - opentang\n",
-            nextcloud_port = nextcloud_port,
-            labels = traefik_labels_block("nextcloud", internet),
-        ));
+        push_service(&mut services, r#"  nextcloud-db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${NEXTCLOUD_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+    volumes:
+      - nextcloud_db:/var/lib/mysql
+    networks:
+      - opentang
+"#);
+        push_service(&mut services, &format!(r#"  nextcloud:
+    image: nextcloud:latest
+    restart: unless-stopped
+    ports:
+      - "{nextcloud_port}:80"
+    depends_on:
+      - nextcloud-db
+    environment:
+      MYSQL_HOST: nextcloud-db
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: ${{NEXTCLOUD_DB_PASSWORD}}
+      NEXTCLOUD_ADMIN_USER: ${{NEXTCLOUD_ADMIN_USER}}
+      NEXTCLOUD_ADMIN_PASSWORD: ${{NEXTCLOUD_ADMIN_PASSWORD}}
+{labels}    volumes:
+      - nextcloud_data:/var/www/html
+    networks:
+      - opentang
+"#));
     }
 
     // ── SearXNG ──────────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "searxng") && !config.excluded_packages.contains(&"searxng".to_string()) {
         let searxng_port = config.detected_ports.get("searxng").copied().unwrap_or(8082);
+        let labels = traefik_labels_block("searxng", internet);
         volumes.push_str("  searxng_data:\n");
-        services.push_str(&format!(
-            "  searxng:\n\
-             image: searxng/searxng:latest\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"{searxng_port}:8080\"\n\
-{labels}    volumes:\n\
-               - searxng_data:/etc/searxng\n\
-             networks:\n\
-               - opentang\n",
-            searxng_port = searxng_port,
-            labels = traefik_labels_block("searxng", internet),
-        ));
+        push_service(&mut services, &format!(r#"  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    ports:
+      - "{searxng_port}:8080"
+{labels}    volumes:
+      - searxng_data:/etc/searxng
+    networks:
+      - opentang
+"#));
     }
 
     // ── IPFS (Kubo) ──────────────────────────────────────────────────────────
     if config.packages.iter().any(|p| p == "ipfs") && !config.excluded_packages.contains(&"ipfs".to_string()) {
+        let labels = traefik_labels_block("ipfs", internet);
         volumes.push_str("  ipfs_data:\n  ipfs_staging:\n");
-        services.push_str(&format!(
-            "  ipfs:\n\
-             image: ipfs/kubo:latest\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"5001:5001\"\n\
-               - \"4001:4001\"\n\
-               - \"4001:4001/udp\"\n\
-               - \"8080:8080\"\n\
-             environment:\n\
-               - IPFS_PROFILE=server\n\
-{labels}    volumes:\n\
-               - ipfs_data:/data/ipfs\n\
-               - ipfs_staging:/export\n\
-             networks:\n\
-               - opentang\n",
-            labels = traefik_labels_block("ipfs", internet),
-        ));
+        push_service(&mut services, &format!(r#"  ipfs:
+    image: ipfs/kubo:latest
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+      - "4001:4001"
+      - "4001:4001/udp"
+      - "8080:8080"
+    environment:
+      - IPFS_PROFILE=server
+{labels}    volumes:
+      - ipfs_data:/data/ipfs
+      - ipfs_staging:/export
+    networks:
+      - opentang
+"#));
     }
 
     // ── Edition service (openclaw / hermes / nanoclaw) ───────────────────────
     if !config.excluded_packages.contains(&"openclaw".to_string()) {
         let edition_image = "linuxserver/heimdall:latest";
         let openclaw_port = config.detected_ports.get("openclaw").copied().unwrap_or(3002);
+        let labels = traefik_labels_block(&config.edition, internet);
         volumes.push_str("  openclaw_data:\n");
-        services.push_str(&format!(
-            "  {edition}:\n\
-             # OpenClaw edition placeholder — real images coming soon\n\
-             image: {image}\n\
-             restart: unless-stopped\n\
-             ports:\n\
-               - \"{openclaw_port}:3000\"\n\
-             environment:\n\
-               OPENCLAW_SECRET: ${{OPENCLAW_SECRET}}\n\
-{labels}    volumes:\n\
-               - openclaw_data:/app/data\n\
-             networks:\n\
-               - opentang\n",
-            edition = config.edition,
-            image = edition_image,
-            openclaw_port = openclaw_port,
-            labels = traefik_labels_block(&config.edition, internet),
-        ));
+        push_service(&mut services, &format!(r#"  {edition}:
+    # OpenClaw edition placeholder — real images coming soon
+    image: {image}
+    restart: unless-stopped
+    ports:
+      - "{openclaw_port}:3000"
+    environment:
+      OPENCLAW_SECRET: ${{OPENCLAW_SECRET}}
+{labels}    volumes:
+      - openclaw_data:/app/data
+    networks:
+      - opentang
+"#, edition = config.edition, image = edition_image));
     }
 
     clean_yaml(&format!(
