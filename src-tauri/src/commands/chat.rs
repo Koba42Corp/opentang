@@ -15,6 +15,7 @@ use serde::Serialize;
 use std::path::PathBuf;
 use tauri::Emitter;
 
+
 const GATEWAY_PORT: u16 = 18789;
 
 /// A single streaming chunk event payload.
@@ -219,6 +220,8 @@ pub async fn chat_send(
 
 // ── Spock (bundled AI) commands ───────────────────────────────────────────────
 
+// ── Spock (bundled AI) commands ───────────────────────────────────────────────
+
 #[derive(Serialize, Clone)]
 pub struct SpockAuthStatus {
     pub authenticated: bool,
@@ -226,7 +229,7 @@ pub struct SpockAuthStatus {
     pub account: Option<String>,
 }
 
-/// Check if Spock OAuth tokens exist (~/.claude/oauth_tokens.json).
+/// Check if Claude OAuth tokens exist (~/.claude/oauth_tokens.json).
 #[tauri::command]
 pub async fn spock_check_auth() -> SpockAuthStatus {
     let home = match dirs::home_dir() {
@@ -244,9 +247,21 @@ pub async fn spock_check_auth() -> SpockAuthStatus {
     SpockAuthStatus { authenticated: true, auth_type: auth_type.clone(), account: auth_type }
 }
 
-/// Find the bundled Spock binary.
+/// Open Claude login in the default browser.
+/// User authenticates, then clicks "Check now" in OpenTang to verify.
+#[tauri::command]
+pub async fn spock_launch_login(console_mode: bool) -> Result<(), String> {
+    let url = if console_mode {
+        "https://platform.claude.com"
+    } else {
+        "https://claude.ai/login"
+    };
+    ::opener::open(url).map_err(|e| format!("Cannot open browser: {e}"))
+}
+
+/// Find the bundled Spock/Claude binary.
 fn find_spock_binary() -> Result<String, String> {
-    // 1. Bundled sidecar next to the Tauri executable
+    // 1. Bundled next to the Tauri executable
     if let Ok(exe) = std::env::current_exe() {
         if let Some(parent) = exe.parent() {
             for name in &["spock", "claude"] {
@@ -255,56 +270,35 @@ fn find_spock_binary() -> Result<String, String> {
             }
         }
     }
-    // 2. Check PATH for spock or claude (Claude Code CLI)
-    for bin_name in &["spock", "claude"] {
-        if let Ok(out) = std::process::Command::new("which").arg(bin_name).output() {
+    // 2. PATH
+    for bin in &["spock", "claude"] {
+        if let Ok(out) = std::process::Command::new("which").arg(bin).output() {
             if out.status.success() {
                 let p = String::from_utf8_lossy(&out.stdout).trim().to_string();
                 if !p.is_empty() { return Ok(p); }
             }
         }
     }
-    // 3. Common locations — macOS Homebrew, nvm, local bin
-    let common: Vec<std::path::PathBuf> = vec![
+    // 3. Common locations (macOS Homebrew, Linux local)
+    let mut candidates = vec![
         std::path::PathBuf::from("/usr/local/bin/claude"),
         std::path::PathBuf::from("/opt/homebrew/bin/claude"),
         std::path::PathBuf::from("/usr/local/bin/spock"),
         std::path::PathBuf::from("/opt/homebrew/bin/spock"),
     ];
-    let home_paths: Vec<std::path::PathBuf> = dirs::home_dir().map(|h| vec![
-        h.join(".local/bin/spock"),
-        h.join(".local/bin/claude"),
-        h.join(".nvm/versions/node/current/bin/claude"),
-    ]).unwrap_or_default();
-
-    for path in common.iter().chain(home_paths.iter()) {
+    if let Some(home) = dirs::home_dir() {
+        candidates.push(home.join(".local/bin/spock"));
+        candidates.push(home.join(".local/bin/claude"));
+        candidates.push(home.join(".nvm/versions/node/current/bin/claude"));
+    }
+    for path in &candidates {
         if path.exists() { return Ok(path.to_string_lossy().to_string()); }
     }
-    Err("Claude CLI not found. Please install Claude Code (npm install -g @anthropic-ai/claude-code) or ensure 'claude' is in your PATH.".to_string())
+    Err("Claude AI binary not found. Connect your Claude account and restart OpenTang.".to_string())
 }
 
-/// Launch the Spock OAuth login flow in a terminal window.
-#[tauri::command]
-pub async fn spock_launch_login(console_mode: bool) -> Result<(), String> {
-    let bin = find_spock_binary()?;
-    let args: &[&str] = if console_mode { &["login", "--console"] } else { &["login"] };
-    for term in &["xterm", "gnome-terminal", "konsole", "alacritty"] {
-        let mut cmd = std::process::Command::new(term);
-        if *term == "gnome-terminal" {
-            cmd.arg("--").arg(&bin).args(args);
-        } else {
-            cmd.arg("-e").arg(format!("{} {}", bin, args.join(" ")));
-        }
-        if cmd.spawn().is_ok() { return Ok(()); }
-    }
-    // macOS fallback
-    let script = format!("tell application \"Terminal\" to do script \"{} {}\"", bin, args.join(" "));
-    std::process::Command::new("osascript").args(["-e", &script])
-        .spawn().map_err(|e| format!("Could not open terminal: {e}"))?;
-    Ok(())
-}
-
-/// Send a message to Spock (headless mode), stream chunks via Tauri events.
+/// Send a message to the bundled Spock/Claude binary in headless mode.
+/// Streams response chunks via Tauri events: spock-chunk, spock-done, spock-error.
 #[tauri::command]
 pub async fn spock_send(
     message: String,
@@ -312,7 +306,6 @@ pub async fn spock_send(
     app: tauri::AppHandle,
 ) -> Result<(), String> {
     let bin = find_spock_binary()?;
-
     let prompt = if let Some(ctx) = &context {
         format!(
             "You are an AI assistant in the OpenTang dashboard. Help troubleshoot self-hosted infrastructure.\n\nSystem status:\n{}\n\nUser: {}",
@@ -321,14 +314,12 @@ pub async fn spock_send(
     } else {
         message.clone()
     };
-
     let mut child = std::process::Command::new(&bin)
         .args(["-p", "--output-format", "stream-json", &prompt])
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::null())
         .spawn()
-        .map_err(|e| format!("Failed to start Spock: {e}"))?;
-
+        .map_err(|e| format!("Failed to start AI: {e}"))?;
     let stdout = child.stdout.take().ok_or_else(|| "No stdout".to_string())?;
     use std::io::{BufRead, BufReader};
     for line in BufReader::new(stdout).lines() {
@@ -341,7 +332,7 @@ pub async fn spock_send(
                         let _ = app.emit("spock-chunk", ChatChunk { text: text.to_string() });
                     }
                 }
-                Some("result") => { let _ = app.emit("spock-done", ()); }
+                Some("result") => { let _ = app.emit("spock-done", ()); return Ok(()); }
                 Some("error") => {
                     let msg = parsed.get("message").and_then(|m| m.as_str()).unwrap_or("Unknown error");
                     let _ = app.emit("spock-error", msg.to_string());
