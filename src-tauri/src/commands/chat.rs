@@ -248,25 +248,39 @@ pub async fn spock_check_auth() -> SpockAuthStatus {
 fn find_spock_binary() -> Result<String, String> {
     // 1. Bundled sidecar next to the Tauri executable
     if let Ok(exe) = std::env::current_exe() {
-        let sidecar = exe.parent().map(|p| p.join("spock")).filter(|p| p.exists());
-        if let Some(path) = sidecar {
-            return Ok(path.to_string_lossy().to_string());
+        if let Some(parent) = exe.parent() {
+            for name in &["spock", "claude"] {
+                let p = parent.join(name);
+                if p.exists() { return Ok(p.to_string_lossy().to_string()); }
+            }
         }
     }
-    // 2. Check PATH
-    if let Ok(out) = std::process::Command::new("which").arg("spock").output() {
-        if out.status.success() {
-            let p = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if !p.is_empty() { return Ok(p); }
+    // 2. Check PATH for spock or claude (Claude Code CLI)
+    for bin_name in &["spock", "claude"] {
+        if let Ok(out) = std::process::Command::new("which").arg(bin_name).output() {
+            if out.status.success() {
+                let p = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !p.is_empty() { return Ok(p); }
+            }
         }
     }
-    // 3. Common locations
-    if let Some(home) = dirs::home_dir() {
-        for path in &[home.join(".local/bin/spock"), std::path::PathBuf::from("/usr/local/bin/spock")] {
-            if path.exists() { return Ok(path.to_string_lossy().to_string()); }
-        }
+    // 3. Common locations — macOS Homebrew, nvm, local bin
+    let common: Vec<std::path::PathBuf> = vec![
+        std::path::PathBuf::from("/usr/local/bin/claude"),
+        std::path::PathBuf::from("/opt/homebrew/bin/claude"),
+        std::path::PathBuf::from("/usr/local/bin/spock"),
+        std::path::PathBuf::from("/opt/homebrew/bin/spock"),
+    ];
+    let home_paths: Vec<std::path::PathBuf> = dirs::home_dir().map(|h| vec![
+        h.join(".local/bin/spock"),
+        h.join(".local/bin/claude"),
+        h.join(".nvm/versions/node/current/bin/claude"),
+    ]).unwrap_or_default();
+
+    for path in common.iter().chain(home_paths.iter()) {
+        if path.exists() { return Ok(path.to_string_lossy().to_string()); }
     }
-    Err("Spock AI binary not found.".to_string())
+    Err("Claude CLI not found. Please install Claude Code (npm install -g @anthropic-ai/claude-code) or ensure 'claude' is in your PATH.".to_string())
 }
 
 /// Launch the Spock OAuth login flow in a terminal window.

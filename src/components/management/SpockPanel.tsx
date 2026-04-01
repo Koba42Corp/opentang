@@ -36,6 +36,7 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const contextSentRef = useRef(false);
 
@@ -56,11 +57,16 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
 
   const handleLogin = async (consoleMode: boolean) => {
     setLoginLoading(true);
+    setLoginError(null);
     try {
       await invoke("spock_launch_login", { consoleMode });
       setTimeout(checkAuth, 12000);
-    } catch (e) { console.error(e); }
-    finally { setTimeout(() => setLoginLoading(false), 3000); }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setLoginError(msg);
+    } finally {
+      setTimeout(() => setLoginLoading(false), 3000);
+    }
   };
 
   const sendMessage = useCallback(async () => {
@@ -153,6 +159,17 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
           Use API Key (Console)
         </button>
       </div>
+      {loginError && (
+        <div className="mt-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400 leading-relaxed">
+          ⚠️ {loginError}
+          {loginError.includes("not found") && (
+            <div className="mt-1.5 text-ot-text-muted">
+              Install Claude Code first:{" "}
+              <code className="font-mono text-ot-orange">npm install -g @anthropic-ai/claude-code</code>
+            </div>
+          )}
+        </div>
+      )}
       <p className="text-xs text-ot-text-muted mt-3">
         After connecting, click to check.{" "}
         <button onClick={checkAuth} className="text-ot-orange hover:underline">Check now</button>
