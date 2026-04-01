@@ -216,3 +216,128 @@ pub async fn chat_send(
     let _ = app.emit("chat-done", ());
     Ok(())
 }
+
+// ── Spock (bundled AI) commands ───────────────────────────────────────────────
+
+#[derive(Serialize, Clone)]
+pub struct SpockAuthStatus {
+    pub authenticated: bool,
+    pub auth_type: Option<String>,
+    pub account: Option<String>,
+}
+
+/// Check if Spock OAuth tokens exist (~/.claude/oauth_tokens.json).
+#[tauri::command]
+pub async fn spock_check_auth() -> SpockAuthStatus {
+    let home = match dirs::home_dir() {
+        Some(h) => h,
+        None => return SpockAuthStatus { authenticated: false, auth_type: None, account: None },
+    };
+    let tokens_path = home.join(".claude").join("oauth_tokens.json");
+    if !tokens_path.exists() {
+        return SpockAuthStatus { authenticated: false, auth_type: None, account: None };
+    }
+    let auth_type = std::fs::read_to_string(&tokens_path)
+        .ok()
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+        .and_then(|v| v.get("subscription_type").and_then(|t| t.as_str()).map(|s| s.to_string()));
+    SpockAuthStatus { authenticated: true, auth_type: auth_type.clone(), account: auth_type }
+}
+
+/// Find the bundled Spock binary.
+fn find_spock_binary() -> Result<String, String> {
+    // 1. Bundled sidecar next to the Tauri executable
+    if let Ok(exe) = std::env::current_exe() {
+        let sidecar = exe.parent().map(|p| p.join("spock")).filter(|p| p.exists());
+        if let Some(path) = sidecar {
+            return Ok(path.to_string_lossy().to_string());
+        }
+    }
+    // 2. Check PATH
+    if let Ok(out) = std::process::Command::new("which").arg("spock").output() {
+        if out.status.success() {
+            let p = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if !p.is_empty() { return Ok(p); }
+        }
+    }
+    // 3. Common locations
+    if let Some(home) = dirs::home_dir() {
+        for path in &[home.join(".local/bin/spock"), std::path::PathBuf::from("/usr/local/bin/spock")] {
+            if path.exists() { return Ok(path.to_string_lossy().to_string()); }
+        }
+    }
+    Err("Spock AI binary not found.".to_string())
+}
+
+/// Launch the Spock OAuth login flow in a terminal window.
+#[tauri::command]
+pub async fn spock_launch_login(console_mode: bool) -> Result<(), String> {
+    let bin = find_spock_binary()?;
+    let args: &[&str] = if console_mode { &["login", "--console"] } else { &["login"] };
+    for term in &["xterm", "gnome-terminal", "konsole", "alacritty"] {
+        let mut cmd = std::process::Command::new(term);
+        if *term == "gnome-terminal" {
+            cmd.arg("--").arg(&bin).args(args);
+        } else {
+            cmd.arg("-e").arg(format!("{} {}", bin, args.join(" ")));
+        }
+        if cmd.spawn().is_ok() { return Ok(()); }
+    }
+    // macOS fallback
+    let script = format!("tell application \"Terminal\" to do script \"{} {}\"", bin, args.join(" "));
+    std::process::Command::new("osascript").args(["-e", &script])
+        .spawn().map_err(|e| format!("Could not open terminal: {e}"))?;
+    Ok(())
+}
+
+/// Send a message to Spock (headless mode), stream chunks via Tauri events.
+#[tauri::command]
+pub async fn spock_send(
+    message: String,
+    context: Option<String>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let bin = find_spock_binary()?;
+
+    let prompt = if let Some(ctx) = &context {
+        format!(
+            "You are an AI assistant in the OpenTang dashboard. Help troubleshoot self-hosted infrastructure.\n\nSystem status:\n{}\n\nUser: {}",
+            ctx, message
+        )
+    } else {
+        message.clone()
+    };
+
+    let mut child = std::process::Command::new(&bin)
+        .args(["-p", "--output-format", "stream-json", &prompt])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .map_err(|e| format!("Failed to start Spock: {e}"))?;
+
+    let stdout = child.stdout.take().ok_or_else(|| "No stdout".to_string())?;
+    use std::io::{BufRead, BufReader};
+    for line in BufReader::new(stdout).lines() {
+        let line = match line { Ok(l) => l, Err(_) => break };
+        if line.trim().is_empty() { continue; }
+        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&line) {
+            match parsed.get("type").and_then(|t| t.as_str()) {
+                Some("content") => {
+                    if let Some(text) = parsed.get("text").and_then(|t| t.as_str()) {
+                        let _ = app.emit("spock-chunk", ChatChunk { text: text.to_string() });
+                    }
+                }
+                Some("result") => { let _ = app.emit("spock-done", ()); }
+                Some("error") => {
+                    let msg = parsed.get("message").and_then(|m| m.as_str()).unwrap_or("Unknown error");
+                    let _ = app.emit("spock-error", msg.to_string());
+                    return Ok(());
+                }
+                _ => {}
+            }
+        }
+    }
+    let _ = child.wait();
+    let _ = app.emit("spock-done", ());
+    Ok(())
+}

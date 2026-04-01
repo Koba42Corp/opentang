@@ -9,7 +9,7 @@ use commands::registry::{
     get_registry, install_package, remove_package, update_package,
     load_install_state, save_install_state,
 };
-use commands::chat::{chat_send, chat_check_gateway};
+use commands::chat::{chat_send, chat_check_gateway, spock_check_auth, spock_launch_login, spock_send};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -31,6 +31,9 @@ pub fn run() {
             save_install_state,
             chat_send,
             chat_check_gateway,
+            spock_check_auth,
+            spock_launch_login,
+            spock_send,
         ])
         .run(tauri::generate_context!())
         .expect("error while running OpenTang")

@@ -15,14 +15,14 @@ import {
   Bell,
 } from "lucide-react";
 import { useWizardStore, ServiceStatus } from "../../store/useWizardStore";
-import { ChatPanel } from "./ChatPanel";
+import { SpockPanel } from "./SpockPanel";
 
 interface VersionInfo {
   latest: string;
   releaseNotes?: string;
 }
 
-const CURRENT_VERSION = "0.1.1";
+const CURRENT_VERSION = "0.1.2";
 
 function semverGreater(a: string, b: string): boolean {
   const parse = (v: string) => v.replace(/[^0-9.]/g, "").split(".").map(Number);
@@ -278,20 +278,10 @@ export default function DashboardTab() {
         </div>
       )}
 
-      {/* AI Assistant Chat Panel — only shown when an agent edition is installed */}
-      {installState?.edition && (
-        <div className="mt-6">
-          <div className="flex items-center gap-2 mb-3">
-            <h3 className="text-sm font-semibold text-ot-text">AI Assistant</h3>
-            <span className="text-xs text-ot-text-muted">· Powered by your installed agent</span>
-          </div>
-          <ChatPanel
-            installPath={path}
-            edition={installState.edition}
-            services={statuses}
-          />
-        </div>
-      )}
+      {/* AI Assistant — Spock (bundled Claude) always shown */}
+      <div className="mt-6">
+        <SpockPanel services={statuses} />
+      </div>
     </div>
   );
 }

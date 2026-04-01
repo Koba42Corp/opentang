@@ -2392,7 +2392,7 @@ dependencies = [
 
 [[package]]
 name = "opentang"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "dirs 5.0.1",
  "futures-util",
