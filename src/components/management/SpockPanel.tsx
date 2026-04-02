@@ -58,14 +58,37 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
   const handleLogin = async (consoleMode: boolean) => {
     setLoginLoading(true);
     setLoginError(null);
+
+    // Listen for auth completion events from the Rust PKCE flow
+    const unlistenComplete = await listen("spock-auth-complete", () => {
+      unlistenComplete();
+      unlistenError();
+      setLoginLoading(false);
+      checkAuth(); // re-check — tokens now exist
+    });
+
+    const unlistenError = await listen<string>("spock-auth-error", (e) => {
+      unlistenComplete();
+      unlistenError();
+      setLoginLoading(false);
+      setLoginError(e.payload);
+    });
+
     try {
-      await invoke("spock_launch_login", { consoleMode });
-      setTimeout(checkAuth, 12000);
+      await invoke("spock_launch_login", { consoleMode, app: undefined });
+      // loginLoading stays true — waiting for browser callback
+      // Timeout safety: auto-clear after 130s if no event received
+      setTimeout(() => {
+        setLoginLoading(false);
+        unlistenComplete();
+        unlistenError();
+      }, 130000);
     } catch (e: unknown) {
+      unlistenComplete();
+      unlistenError();
       const msg = e instanceof Error ? e.message : String(e);
       setLoginError(msg);
-    } finally {
-      setTimeout(() => setLoginLoading(false), 3000);
+      setLoginLoading(false);
     }
   };
 

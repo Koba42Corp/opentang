@@ -247,17 +247,6 @@ pub async fn spock_check_auth() -> SpockAuthStatus {
     SpockAuthStatus { authenticated: true, auth_type: auth_type.clone(), account: auth_type }
 }
 
-/// Open Claude login in the default browser.
-/// User authenticates, then clicks "Check now" in OpenTang to verify.
-#[tauri::command]
-pub async fn spock_launch_login(console_mode: bool) -> Result<(), String> {
-    let url = if console_mode {
-        "https://platform.claude.com"
-    } else {
-        "https://claude.ai/login"
-    };
-    ::opener::open(url).map_err(|e| format!("Cannot open browser: {e}"))
-}
 
 /// Find the bundled Spock/Claude binary.
 fn find_spock_binary() -> Result<String, String> {
