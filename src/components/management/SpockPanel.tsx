@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { Send, Loader, Sparkles, LogIn, Key, RefreshCcw } from "lucide-react";
+import { Send, Loader, Sparkles, Key, RefreshCcw, LogOut, Eye, EyeOff } from "lucide-react";
 import { ServiceStatus } from "../../store/useWizardStore";
 
 interface SpockAuthStatus {
@@ -35,8 +35,11 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  // API key input state
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const contextSentRef = useRef(false);
 
@@ -55,41 +58,25 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
   useEffect(() => { checkAuth(); }, [checkAuth]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const handleLogin = async (consoleMode: boolean) => {
-    setLoginLoading(true);
-    setLoginError(null);
-
-    // Listen for auth completion events from the Rust PKCE flow
-    const unlistenComplete = await listen("spock-auth-complete", () => {
-      unlistenComplete();
-      unlistenError();
-      setLoginLoading(false);
-      checkAuth(); // re-check — tokens now exist
-    });
-
-    const unlistenError = await listen<string>("spock-auth-error", (e) => {
-      unlistenComplete();
-      unlistenError();
-      setLoginLoading(false);
-      setLoginError(e.payload);
-    });
-
+  const handleSaveKey = async () => {
+    setSaving(true);
+    setSaveError(null);
     try {
-      await invoke("spock_launch_login", { consoleMode, app: undefined });
-      // loginLoading stays true — waiting for browser callback
-      // Timeout safety: auto-clear after 130s if no event received
-      setTimeout(() => {
-        setLoginLoading(false);
-        unlistenComplete();
-        unlistenError();
-      }, 130000);
+      await invoke("spock_save_api_key", { apiKey: apiKeyInput });
+      setApiKeyInput("");
+      await checkAuth();
     } catch (e: unknown) {
-      unlistenComplete();
-      unlistenError();
-      const msg = e instanceof Error ? e.message : String(e);
-      setLoginError(msg);
-      setLoginLoading(false);
+      setSaveError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await invoke("spock_remove_api_key").catch(() => {});
+    setMessages([]);
+    contextSentRef.current = false;
+    await checkAuth();
   };
 
   const sendMessage = useCallback(async () => {
@@ -159,52 +146,64 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
     </div>
   );
 
+  // ── Not authenticated — API key entry form ──────────────────────────────────
   if (!auth?.authenticated) return (
     <div className="rounded-xl border border-ot-border bg-ot-surface p-5">
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-4 h-4 text-ot-orange" />
         <span className="text-sm font-semibold text-ot-text">AI Assistant</span>
-        <span className="text-xs bg-ot-orange/10 text-ot-orange px-1.5 py-0.5 rounded font-medium">Powered by Claude</span>
+        <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: 'rgba(249,115,22,0.1)', color: '#F97316' }}>
+          Powered by Claude
+        </span>
       </div>
       <p className="text-xs text-ot-text-muted mb-4 leading-relaxed">
-        Connect your Claude account to get an AI assistant built into your dashboard.
-        Works with Claude Pro, Max, and Team subscriptions — no API key required.
+        Enter your Anthropic API key to enable the AI assistant. Get one at{" "}
+        <a href="https://console.anthropic.com/keys" target="_blank" rel="noopener noreferrer" className="text-ot-orange hover:underline">
+          console.anthropic.com
+        </a>.
       </p>
-      <div className="flex flex-col gap-2">
-        <button onClick={() => handleLogin(false)} disabled={loginLoading}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-          style={{ backgroundColor: '#F97316', color: '#000000' }}>
-          {loginLoading ? <Loader className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
-          Connect Claude Account (Subscription)
-        </button>
-        <button onClick={() => handleLogin(true)} disabled={loginLoading}
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-          style={{ backgroundColor: '#2A2A32', color: '#F8F8F8', border: '1px solid #4A4A58' }}>
-          <Key className="w-3.5 h-3.5" />
-          Use API Key (Console)
+
+      <div className="flex gap-2 mb-3">
+        <div className="flex-1 relative">
+          <input
+            type={showKey ? "text" : "password"}
+            value={apiKeyInput}
+            onChange={e => setApiKeyInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSaveKey()}
+            placeholder="sk-ant-api03-..."
+            className="w-full bg-ot-elevated border border-ot-border rounded-lg px-3 py-2 text-sm text-ot-text placeholder:text-ot-text-muted focus:outline-none focus:border-ot-orange transition-colors font-mono pr-10"
+          />
+          <button
+            onClick={() => setShowKey(s => !s)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-ot-text-muted hover:text-ot-text"
+          >
+            {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        <button
+          onClick={handleSaveKey}
+          disabled={saving || !apiKeyInput.trim()}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+          style={{ backgroundColor: '#F97316', color: '#000000' }}
+        >
+          {saving ? <Loader className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
+          Save
         </button>
       </div>
-      {loginError && (
-        <div className="mt-3 p-3 rounded-lg text-xs leading-relaxed" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
-          <div className="font-medium mb-1">⚠️ Could not launch login</div>
-          <div style={{ color: '#8B8B9A' }}>{loginError}</div>
-          {(loginError.includes("not found") || loginError.includes("binary")) && (
-            <div className="mt-2 p-2 rounded" style={{ backgroundColor: 'rgba(0,0,0,0.3)', color: '#8B8B9A' }}>
-              The AI binary hasn't been bundled yet in this build.<br />
-              To use now, install Claude Code manually:<br />
-              <code style={{ color: '#F97316' }}>npm install -g @anthropic-ai/claude-code</code><br />
-              then restart OpenTang.
-            </div>
-          )}
+
+      {saveError && (
+        <div className="p-2.5 rounded-lg text-xs leading-relaxed" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
+          ⚠️ {saveError}
         </div>
       )}
+
       <p className="text-xs text-ot-text-muted mt-3">
-        After connecting, click to check.{" "}
-        <button onClick={checkAuth} className="text-ot-orange hover:underline">Check now</button>
+        Your key is stored locally at <code className="font-mono text-ot-orange text-xs">~/.opentang/ai_api_key</code> and never leaves your machine.
       </p>
     </div>
   );
 
+  // ── Authenticated — chat UI ─────────────────────────────────────────────────
   return (
     <div className="rounded-xl border border-ot-border bg-ot-surface flex flex-col" style={{ height: "420px" }}>
       <div className="flex items-center justify-between px-4 py-3 border-b border-ot-border">
@@ -212,11 +211,16 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
           <div className="w-2 h-2 rounded-full bg-ot-success animate-pulse" />
           <Sparkles className="w-4 h-4 text-ot-orange" />
           <span className="text-sm font-semibold text-ot-text">AI Assistant</span>
-          <span className="text-xs text-ot-text-muted">· {auth.auth_type ?? "Claude"}</span>
+          <span className="text-xs text-ot-text-muted">· {auth.account ?? "Claude"}</span>
         </div>
-        <button onClick={checkAuth} className="text-xs text-ot-text-muted hover:text-ot-orange transition-colors">
-          <RefreshCcw className="w-3 h-3" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={checkAuth} className="text-xs text-ot-text-muted hover:text-ot-orange transition-colors" title="Refresh">
+            <RefreshCcw className="w-3 h-3" />
+          </button>
+          <button onClick={handleLogout} className="text-xs text-ot-text-muted hover:text-red-400 transition-colors" title="Remove API key">
+            <LogOut className="w-3 h-3" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -252,7 +256,8 @@ export function SpockPanel({ services = [] }: SpockPanelProps) {
           className="flex-1 resize-none bg-ot-elevated border border-ot-border rounded-lg px-3 py-2 text-sm text-ot-text placeholder:text-ot-text-muted focus:outline-none focus:border-ot-orange transition-colors disabled:opacity-50"
           style={{ maxHeight: "80px" }} />
         <button onClick={sendMessage} disabled={!input.trim() || sending}
-          className="flex-shrink-0 w-9 h-9 rounded-lg bg-ot-orange hover:bg-orange-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors">
+          className="flex-shrink-0 w-9 h-9 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+          style={{ backgroundColor: '#F97316' }}>
           {sending ? <Loader className="w-4 h-4 animate-spin text-black" /> : <Send className="w-4 h-4 text-black" />}
         </button>
       </div>

@@ -220,7 +220,10 @@ pub async fn chat_send(
 
 // ── Spock (bundled AI) commands ───────────────────────────────────────────────
 
-// ── Spock (bundled AI) commands ───────────────────────────────────────────────
+/// API key storage path: ~/.opentang/ai_api_key
+fn api_key_path() -> Option<std::path::PathBuf> {
+    dirs::home_dir().map(|h| h.join(".opentang").join("ai_api_key"))
+}
 
 #[derive(Serialize, Clone)]
 pub struct SpockAuthStatus {
@@ -229,22 +232,45 @@ pub struct SpockAuthStatus {
     pub account: Option<String>,
 }
 
-/// Check if Claude OAuth tokens exist (~/.claude/oauth_tokens.json).
+/// Check if an Anthropic API key has been saved to ~/.opentang/ai_api_key.
 #[tauri::command]
 pub async fn spock_check_auth() -> SpockAuthStatus {
-    let home = match dirs::home_dir() {
-        Some(h) => h,
-        None => return SpockAuthStatus { authenticated: false, auth_type: None, account: None },
-    };
-    let tokens_path = home.join(".claude").join("oauth_tokens.json");
-    if !tokens_path.exists() {
-        return SpockAuthStatus { authenticated: false, auth_type: None, account: None };
+    match api_key_path().and_then(|p| std::fs::read_to_string(p).ok()) {
+        Some(key) if !key.trim().is_empty() => SpockAuthStatus {
+            authenticated: true,
+            auth_type: Some("api_key".to_string()),
+            account: Some(format!("sk-ant-...{}", &key.trim()[key.trim().len().saturating_sub(6)..])),
+        },
+        _ => SpockAuthStatus { authenticated: false, auth_type: None, account: None },
     }
-    let auth_type = std::fs::read_to_string(&tokens_path)
-        .ok()
-        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
-        .and_then(|v| v.get("subscription_type").and_then(|t| t.as_str()).map(|s| s.to_string()));
-    SpockAuthStatus { authenticated: true, auth_type: auth_type.clone(), account: auth_type }
+}
+
+/// Save an Anthropic API key to ~/.opentang/ai_api_key.
+#[tauri::command]
+pub async fn spock_save_api_key(api_key: String) -> Result<(), String> {
+    let key = api_key.trim().to_string();
+    if key.is_empty() {
+        return Err("API key cannot be empty".to_string());
+    }
+    if !key.starts_with("sk-ant-") {
+        return Err("Invalid API key format. Anthropic API keys start with sk-ant-".to_string());
+    }
+    let path = api_key_path().ok_or("Cannot find home dir")?;
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&path, &key).map_err(|e| format!("Failed to save API key: {e}"))
+}
+
+/// Remove the saved API key (logout).
+#[tauri::command]
+pub async fn spock_remove_api_key() -> Result<(), String> {
+    if let Some(path) = api_key_path() {
+        if path.exists() {
+            std::fs::remove_file(&path).map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
 }
 
 
@@ -286,7 +312,7 @@ fn find_spock_binary() -> Result<String, String> {
     Err("Claude AI binary not found. Connect your Claude account and restart OpenTang.".to_string())
 }
 
-/// Send a message to the bundled Spock/Claude binary in headless mode.
+/// Send a message to Claude via the Anthropic API directly using the saved API key.
 /// Streams response chunks via Tauri events: spock-chunk, spock-done, spock-error.
 #[tauri::command]
 pub async fn spock_send(
@@ -294,44 +320,89 @@ pub async fn spock_send(
     context: Option<String>,
     app: tauri::AppHandle,
 ) -> Result<(), String> {
-    let bin = find_spock_binary()?;
-    let prompt = if let Some(ctx) = &context {
+    // Read the saved API key
+    let api_key = api_key_path()
+        .and_then(|p| std::fs::read_to_string(p).ok())
+        .map(|k| k.trim().to_string())
+        .filter(|k| !k.is_empty())
+        .ok_or_else(|| "No API key configured. Please add your Anthropic API key in the AI Assistant settings.".to_string())?;
+
+    let system_prompt = if let Some(ctx) = &context {
         format!(
-            "You are an AI assistant in the OpenTang dashboard. Help troubleshoot self-hosted infrastructure.\n\nSystem status:\n{}\n\nUser: {}",
-            ctx, message
+            "You are an AI assistant embedded in the OpenTang dashboard. \
+             Help the user troubleshoot and manage their self-hosted infrastructure.\n\nCurrent system status:\n{}",
+            ctx
         )
     } else {
-        message.clone()
+        "You are an AI assistant embedded in the OpenTang dashboard. Help the user troubleshoot and manage their self-hosted infrastructure.".to_string()
     };
-    let mut child = std::process::Command::new(&bin)
-        .args(["-p", "--output-format", "stream-json", &prompt])
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::null())
-        .spawn()
-        .map_err(|e| format!("Failed to start AI: {e}"))?;
-    let stdout = child.stdout.take().ok_or_else(|| "No stdout".to_string())?;
-    use std::io::{BufRead, BufReader};
-    for line in BufReader::new(stdout).lines() {
-        let line = match line { Ok(l) => l, Err(_) => break };
-        if line.trim().is_empty() { continue; }
-        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&line) {
-            match parsed.get("type").and_then(|t| t.as_str()) {
-                Some("content") => {
-                    if let Some(text) = parsed.get("text").and_then(|t| t.as_str()) {
-                        let _ = app.emit("spock-chunk", ChatChunk { text: text.to_string() });
+
+    let body = serde_json::json!({
+        "model": "claude-sonnet-4-5",
+        "max_tokens": 4096,
+        "stream": true,
+        "system": system_prompt,
+        "messages": [{"role": "user", "content": message}]
+    });
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(120))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let response = client
+        .post("https://api.anthropic.com/v1/messages")
+        .header("x-api-key", &api_key)
+        .header("anthropic-version", "2023-06-01")
+        .header("content-type", "application/json")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("API request failed: {e}"))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let text = response.text().await.unwrap_or_default();
+        let _ = app.emit("spock-error", format!("API error {status}: {text}"));
+        return Err(format!("Anthropic API returned {status}"));
+    }
+
+    use futures_util::StreamExt;
+    let mut stream = response.bytes_stream();
+    let mut buffer = String::new();
+
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|e| e.to_string())?;
+        buffer.push_str(&String::from_utf8_lossy(&chunk));
+
+        while let Some(pos) = buffer.find('\n') {
+            let line = buffer[..pos].trim().to_string();
+            buffer = buffer[pos + 1..].to_string();
+
+            if let Some(data) = line.strip_prefix("data: ") {
+                if data == "[DONE]" { break; }
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(data) {
+                    // SSE stream: content_block_delta events carry the text
+                    if parsed.get("type").and_then(|t| t.as_str()) == Some("content_block_delta") {
+                        if let Some(text) = parsed
+                            .get("delta")
+                            .and_then(|d| d.get("text"))
+                            .and_then(|t| t.as_str())
+                        {
+                            if !text.is_empty() {
+                                let _ = app.emit("spock-chunk", ChatChunk { text: text.to_string() });
+                            }
+                        }
+                    }
+                    if parsed.get("type").and_then(|t| t.as_str()) == Some("message_stop") {
+                        let _ = app.emit("spock-done", ());
+                        return Ok(());
                     }
                 }
-                Some("result") => { let _ = app.emit("spock-done", ()); return Ok(()); }
-                Some("error") => {
-                    let msg = parsed.get("message").and_then(|m| m.as_str()).unwrap_or("Unknown error");
-                    let _ = app.emit("spock-error", msg.to_string());
-                    return Ok(());
-                }
-                _ => {}
             }
         }
     }
-    let _ = child.wait();
+
     let _ = app.emit("spock-done", ());
     Ok(())
 }

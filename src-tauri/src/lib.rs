@@ -9,8 +9,7 @@ use commands::registry::{
     get_registry, install_package, remove_package, update_package,
     load_install_state, save_install_state,
 };
-use commands::chat::{chat_send, chat_check_gateway, spock_check_auth, spock_send};
-use commands::oauth::spock_launch_login;
+use commands::chat::{chat_send, chat_check_gateway, spock_check_auth, spock_send, spock_save_api_key, spock_remove_api_key};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -33,7 +32,8 @@ pub fn run() {
             chat_send,
             chat_check_gateway,
             spock_check_auth,
-            spock_launch_login,
+            spock_save_api_key,
+            spock_remove_api_key,
             spock_send,
         ])
         .run(tauri::generate_context!())
