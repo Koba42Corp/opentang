@@ -464,6 +464,23 @@ fn build_compose(config: &InstallConfig) -> String {
 "#));
     }
 
+    // ── Rawkit Memory ────────────────────────────────────────────────────────
+    if config.packages.iter().any(|p| p == "rawkit-memory") && !config.excluded_packages.contains(&"rawkit-memory".to_string()) {
+        let rawkit_port = config.detected_ports.get("rawkit-memory").copied().unwrap_or(8765);
+        let labels = traefik_labels_block("rawkit-memory", internet);
+        volumes.push_str("  rawkit_data:\n");
+        push_service(&mut services, &format!(r#"  rawkit-memory:
+    image: ghcr.io/koba42corp/rawkit_ai:latest
+    restart: unless-stopped
+    ports:
+      - "{rawkit_port}:8765"
+{labels}    volumes:
+      - rawkit_data:/data
+    networks:
+      - opentang
+"#));
+    }
+
     // ── Edition service (openclaw / hermes / nanoclaw) ───────────────────────
     if !config.excluded_packages.contains(&"openclaw".to_string()) {
         let edition_image = "linuxserver/heimdall:latest";
@@ -558,6 +575,14 @@ fn build_env(config: &InstallConfig) -> String {
              NEXTCLOUD_ADMIN_PASSWORD='{admin_pw}'\n\
              NEXTCLOUD_DB_PASSWORD='{db_pw}'\n\
              NEXTCLOUD_DB_ROOT_PASSWORD='{db_root_pw}'\n"
+        ));
+    }
+
+    // ── Rawkit Memory ────────────────────────────────────────────────────────
+    if config.packages.iter().any(|p| p == "rawkit-memory") {
+        let port = config.detected_ports.get("rawkit-memory").copied().unwrap_or(8765);
+        env.push_str(&format!(
+            "\n# Rawkit Memory\nRAWKIT_RELAY_URL=ws://rawkit-memory:{port}\n"
         ));
     }
 

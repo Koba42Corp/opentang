@@ -294,6 +294,30 @@
       "compose_service": "searxng"
     },
     {
+      "id": "rawkit-memory",
+      "name": "Rawkit AI",
+      "version": "0.1.0",
+      "description": "Decentralized vector-graph memory for AI agents. Real-time sync, semantic search, wallet identity.",
+      "category": "ai",
+      "tags": [
+        "memory",
+        "ai",
+        "vector",
+        "graph",
+        "decentralized",
+        "crdt",
+        "agents"
+      ],
+      "icon": "brain",
+      "min_ram_mb": 128,
+      "min_disk_gb": 1,
+      "port": 8765,
+      "url_path": null,
+      "koba42_featured": true,
+      "official": true,
+      "compose_service": "rawkit-memory"
+    },
+    {
       "id": "sage-wallet",
       "name": "Sage Wallet",
       "version": "latest",
