@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
   CheckCircle, ExternalLink, RotateCcw, BookOpen,
-  XCircle, Loader, AlertTriangle,
+  XCircle, Loader, AlertTriangle, Copy,
 } from "lucide-react";
 import { useWizardStore, ServiceStatus, InstallState } from "../../../store/useWizardStore";
 import { Button } from "../../shared/Button";
@@ -36,6 +36,7 @@ export default function Step8Done() {
     networkConfig,
     edition,
     llmMode,
+    templateProfile,
     installPath,
     serviceStatuses,
     setServiceStatuses,
@@ -45,6 +46,7 @@ export default function Step8Done() {
 
   // Track timed-out services (didn't come up within 60s)
   const [timedOut, setTimedOut] = useState<Set<string>>(new Set());
+  const [copiedTemplatePath, setCopiedTemplatePath] = useState(false);
   const pollCountRef = useRef(0);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -166,6 +168,17 @@ export default function Step8Done() {
     void id; // logs link goes to Portainer container view
   }
 
+  async function copyTemplatePath() {
+    const path = `${installPath}/templates/tactical-template-system`;
+    try {
+      await navigator.clipboard.writeText(path);
+      setCopiedTemplatePath(true);
+      setTimeout(() => setCopiedTemplatePath(false), 2000);
+    } catch {
+      setCopiedTemplatePath(false);
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Hero */}
@@ -179,6 +192,22 @@ export default function Step8Done() {
           Edition: {editionName} · {visibleLinks.length} services installed
         </p>
       </div>
+
+      {templateProfile === "tactical-lite" && (
+        <div className="rounded-xl border border-ot-orange-500/40 bg-ot-orange-500/10 p-4 mb-4">
+          <p className="text-sm font-semibold text-ot-text mb-1">Tactical Template System (Lite) installed</p>
+          <p className="text-xs text-ot-text-secondary mb-2">
+            Templates are available at <code className="text-ot-text">{installPath}/templates/tactical-template-system</code>
+          </p>
+          <button
+            onClick={copyTemplatePath}
+            className="inline-flex items-center gap-1.5 text-xs text-ot-orange-300 hover:text-ot-orange-200 transition-colors"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            {copiedTemplatePath ? "Copied" : "Copy template path"}
+          </button>
+        </div>
+      )}
 
       {/* Installed services with live health */}
       <div className="rounded-xl border border-ot-border bg-ot-elevated overflow-hidden mb-4">

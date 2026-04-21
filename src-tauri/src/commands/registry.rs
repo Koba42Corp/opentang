@@ -226,7 +226,7 @@ fn remove_service_from_compose(compose_path: &PathBuf, package_id: &str) -> Resu
         while end < lines.len() {
             let l = lines[end];
             // Another service at the same indent level, or a top-level key
-            if (l.starts_with("  ") && !l.starts_with("   ") && l.ends_with(':') && end != start) {
+            if l.starts_with("  ") && !l.starts_with("   ") && l.ends_with(':') && end != start {
                 break;
             }
             if !l.starts_with(' ') && !l.is_empty() {

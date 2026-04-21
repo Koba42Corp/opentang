@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Package, ArrowRight, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
+import { Package, ArrowRight, ArrowLeft, AlertTriangle, RefreshCw, BookOpen } from "lucide-react";
 import { useWizardStore } from "../../../store/useWizardStore";
 import { Button } from "../../shared/Button";
 
@@ -47,6 +47,7 @@ export default function Step4Packages() {
   const {
     nextStep, prevStep, completeStep, currentStep,
     selectedPackages, setSelectedPackages, togglePackage,
+    templateProfile, setTemplateProfile,
     systemCheck, detectedServices,
     forceReinstallPackages, toggleForceReinstall,
   } = useWizardStore();
@@ -150,6 +151,48 @@ export default function Step4Packages() {
         forceReinstallPackages={forceReinstallPackages}
         onToggleForceReinstall={toggleForceReinstall}
       />
+
+      {/* Templates */}
+      <div className="mb-5">
+        <p className="text-xs font-semibold text-ot-text-muted uppercase tracking-wider mb-2">Templates</p>
+        <button
+          type="button"
+          onClick={() => setTemplateProfile(templateProfile === "tactical-lite" ? "none" : "tactical-lite")}
+          className={[
+            "w-full rounded-xl border bg-ot-elevated p-4 text-left transition-all",
+            templateProfile === "tactical-lite"
+              ? "border-ot-orange-500 ring-1 ring-ot-orange-500"
+              : "border-ot-border hover:border-ot-orange-500/40",
+          ].join(" ")}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={[
+                "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0",
+                templateProfile === "tactical-lite"
+                  ? "border-ot-orange-500 bg-ot-orange-500"
+                  : "border-ot-border",
+              ].join(" ")}
+            >
+              {templateProfile === "tactical-lite" && <span className="text-white text-[10px] font-bold">✓</span>}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <BookOpen className="w-4 h-4 text-ot-orange-400" />
+                <p className="text-sm font-semibold text-ot-text">Tactical Template System (Lite)</p>
+              </div>
+              <p className="text-xs text-ot-text-secondary mb-2">
+                Install a lightweight Starfleet-style operating kit so teams can start with structure, not chaos.
+              </p>
+              <ul className="space-y-1">
+                <li className="text-xs text-ot-text-muted">• 4-layer command hierarchy</li>
+                <li className="text-xs text-ot-text-muted">• 5 non-skippable quality gates</li>
+                <li className="text-xs text-ot-text-muted">• Role contracts + delegate prompt templates</li>
+              </ul>
+            </div>
+          </div>
+        </button>
+      </div>
 
       {/* Resource estimator */}
       <div className="mt-5 rounded-xl border border-ot-border bg-ot-elevated p-4">

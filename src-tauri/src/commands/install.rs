@@ -11,12 +11,14 @@ use rand::Rng;
 // ── Structs ───────────────────────────────────────────────────────────────────
 
 #[derive(serde::Deserialize)]
+#[allow(dead_code)]
 pub struct CredentialPair {
     pub username: String,
     pub password: String,
 }
 
 #[derive(serde::Deserialize)]
+#[allow(dead_code)]
 pub struct InstallConfig {
     pub edition: String,
     pub packages: Vec<String>,
@@ -25,6 +27,8 @@ pub struct InstallConfig {
     pub email: Option<String>,
     pub llm_mode: String,
     pub llm_model: Option<String>,
+    #[serde(default)]
+    pub template_profile: Option<String>,
     pub credentials: HashMap<String, CredentialPair>,
     pub install_path: String,
     #[serde(default)]
@@ -120,6 +124,10 @@ fn cred_pw(credentials: &HashMap<String, CredentialPair>, key: &str) -> String {
         .get(key)
         .map(|c| c.password.clone())
         .unwrap_or_else(|| gen_password(24))
+}
+
+fn wants_tactical_lite(config: &InstallConfig) -> bool {
+    matches!(config.template_profile.as_deref(), Some("tactical-lite"))
 }
 
 /// Normalize YAML: collapse consecutive blank lines and ensure every non-blank
@@ -857,6 +865,139 @@ fn write_openclaw_config() -> Result<(), String> {
     Ok(())
 }
 
+const TACTICAL_README: &str = r#"# Tactical Template System (Lite)
+
+This bundle gives you a lightweight command structure for running AI work in Hermes-style missions.
+
+## Start here
+1. Read `role-matrix-lite.md`
+2. Run `mission-startup.md`
+3. Use `gates-checklist.md` during execution
+4. Start from a mission template in `missions/`
+
+## Included
+- 4-layer command model
+- 5 no-skip quality gates
+- role contracts and delegate prompts
+"#;
+
+const TACTICAL_MISSION_STARTUP: &str = r#"# Mission Startup (Lite)
+
+- Mission objective:
+- Constraints:
+- Definition of done:
+- Deadline:
+- Owner:
+
+## Kickoff sequence
+1. Confirm Gate 0 scope
+2. Create task IDs and dependencies
+3. Assign owners by role
+4. Dispatch only unblocked tasks
+5. Collect evidence before release
+"#;
+
+const TACTICAL_ROLE_MATRIX: &str = r#"# Role Matrix (Lite)
+
+## Command Authority (Human)
+- Final scope, risk, and release decision
+
+## Orchestrator
+- Plans sequence and routes escalations
+
+## Core division leads
+- Engineering
+- QA
+- Legal/Compliance
+- Marketing/Comms
+
+## Specialist delegates
+- Execute narrow scoped tasks with least-privilege tools
+"#;
+
+const TACTICAL_GATES: &str = r#"# Gates Checklist (No Skip)
+
+- Gate 0 — Scope: objective, constraints, done criteria
+- Gate 1 — Plan: tasks, dependencies, owners
+- Gate 2 — Build: implementation complete
+- Gate 3 — Verify: QA/security/legal evidence attached
+- Gate 4 — Release: rollout + rollback + signoff
+
+No evidence = no promotion.
+"#;
+
+const TACTICAL_DELEGATE_PROMPTS: &str = r#"# Delegate Prompts (Lite)
+
+## Engineering Lead
+Return: decision summary, code artifacts, risks, verification evidence, next dependency unlocked.
+
+## QA Lead
+Return: test plan, failing/passing evidence, risk notes, release recommendation.
+
+## Legal/Compliance Lead
+Return: policy check summary, required changes, blockers, signoff status.
+
+## Marketing/Comms Lead
+Return: message brief, deliverables, assumptions, approval dependencies.
+"#;
+
+const TACTICAL_FEATURE_SHIP: &str = r#"# Mission Template: Feature Ship (Lite)
+
+## Objective
+Ship one feature safely with verification evidence.
+
+## Required roles
+- Orchestrator
+- Engineering
+- QA
+
+## Exit criteria
+- Gate 4 approved
+- rollback owner assigned
+"#;
+
+const TACTICAL_INCIDENT: &str = r#"# Mission Template: Incident Response (Lite)
+
+## Objective
+Stabilize service, communicate status, and prevent recurrence.
+
+## Required roles
+- Orchestrator
+- Engineering
+- QA
+- Comms
+
+## Exit criteria
+- service restored
+- root cause logged
+- follow-up tasks created
+"#;
+
+fn write_tactical_template_bundle(install_path: &std::path::Path) -> Result<(), String> {
+    let base = install_path.join("templates").join("tactical-template-system");
+    let missions = base.join("missions");
+
+    std::fs::create_dir_all(&missions)
+        .map_err(|e| format!("Failed creating tactical template directory: {e}"))?;
+
+    let files = vec![
+        (base.join("README.md"), TACTICAL_README),
+        (base.join("mission-startup.md"), TACTICAL_MISSION_STARTUP),
+        (base.join("role-matrix-lite.md"), TACTICAL_ROLE_MATRIX),
+        (base.join("gates-checklist.md"), TACTICAL_GATES),
+        (base.join("delegate-prompts-lite.md"), TACTICAL_DELEGATE_PROMPTS),
+        (missions.join("feature-ship-lite.md"), TACTICAL_FEATURE_SHIP),
+        (missions.join("incident-lite.md"), TACTICAL_INCIDENT),
+    ];
+
+    for (path, content) in files {
+        std::fs::write(&path, content)
+            .map_err(|e| format!("Failed writing template file {}: {e}", path.display()))?;
+    }
+
+    Ok(())
+}
+
 // ── Commands ──────────────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -875,6 +1016,10 @@ pub async fn generate_compose(config: InstallConfig) -> Result<String, String> {
 
     std::fs::write(path.join(".env"), &env_contents)
         .map_err(|e| format!("Failed to write .env: {e}"))?;
+
+    if wants_tactical_lite(&config) {
+        write_tactical_template_bundle(&path)?;
+    }
 
     // Write OpenClaw gateway config to enable chat completions endpoint
     let has_agent = config.packages.iter().any(|p| {

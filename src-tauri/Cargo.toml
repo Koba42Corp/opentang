@@ -50,4 +50,3 @@ codegen-units = 1    # Compile crates one after another so the compiler can opti
 lto = true           # Enables link-time-optimizations
 opt-level = "s"      # Optimize for binary size
 strip = true         # Automatically strip symbols from the binary
-opener = "0.7"

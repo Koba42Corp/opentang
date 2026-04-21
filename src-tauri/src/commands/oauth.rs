@@ -12,6 +12,8 @@
 //!   6. Save tokens to ~/.claude/oauth_tokens.json
 //!   7. Emit spock-auth-complete or spock-auth-error via Tauri events
 
+#![allow(dead_code)]
+
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -316,7 +318,7 @@ pub async fn spock_launch_login(console_mode: bool, app: tauri::AppHandle) -> Re
         if let Ok(std_listener) = listener.try_clone() {
             // Use a separate thread to enforce timeout
             let (tx, rx) = std::sync::mpsc::channel();
-            let tx2 = tx.clone();
+            let _tx2 = tx.clone();
             let state2_cb = state2.clone();
             std::thread::spawn(move || {
                 let result = wait_for_callback(std_listener, &state2_cb);

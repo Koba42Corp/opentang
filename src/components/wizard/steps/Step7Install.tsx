@@ -68,6 +68,7 @@ export default function Step7Install() {
     edition,
     llmMode,
     llmConfig,
+    templateProfile,
     selectedPackages,
     networkMode,
     credentials,
@@ -166,6 +167,7 @@ export default function Step7Install() {
           email: useWizardStore.getState().networkConfig?.email ?? null,
           llm_mode: llmMode ?? "skip",
           llm_model: llmConfig?.model ?? null,
+          template_profile: templateProfile,
           credentials,
           install_path: installPath,
           excluded_packages: excludedPackages,
@@ -377,6 +379,7 @@ export default function Step7Install() {
   const summaryRows = [
     { label: "Edition", value: editionLabel(edition), step: 2 },
     { label: "LLM", value: llmLabel(llmMode, llmConfig), step: 3 },
+    { label: "Templates", value: templateProfile === "tactical-lite" ? "Tactical Template System (Lite)" : "None", step: 4 },
     {
       label: "Packages",
       value: skippingPackages.length > 0
@@ -492,6 +495,11 @@ export default function Step7Install() {
         </div>
         <p className="text-xs text-ot-text-muted mt-2 ml-7">
           Files written here: <code className="text-ot-text-secondary">docker-compose.yml</code> &amp; <code className="text-ot-text-secondary">.env</code> (keep secure)
+        </p>
+        <p className="text-xs text-ot-text-muted mt-1 ml-7">
+          Template bundle: {templateProfile === "tactical-lite"
+            ? <><code className="text-ot-text-secondary">templates/tactical-template-system</code> will be installed.</>
+            : "None selected."}
         </p>
       </div>
 

@@ -8,6 +8,7 @@ export interface InstallConfig {
   email: string | null;
   llm_mode: string;
   llm_model: string | null;
+  template_profile?: "none" | "tactical-lite";
   credentials: Record<string, Credential>;
   install_path: string;
 }

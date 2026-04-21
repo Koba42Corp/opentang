@@ -136,6 +136,7 @@ interface WizardState {
 
   // Step 4
   selectedPackages: string[];
+  templateProfile: "none" | "tactical-lite";
   forceReinstallPackages: string[];
   toggleForceReinstall: (id: string) => void;
 
@@ -168,6 +169,7 @@ interface WizardState {
   setLlmConfig: (config: LlmConfig) => void;
   togglePackage: (pkg: string) => void;
   setSelectedPackages: (packages: string[]) => void;
+  setTemplateProfile: (profile: WizardState["templateProfile"]) => void;
   setNetworkMode: (mode: WizardState["networkMode"]) => void;
   setNetworkConfig: (config: NetworkConfig) => void;
   setCredentials: (creds: Record<string, { username: string; password: string }>) => void;
@@ -202,6 +204,7 @@ export const useWizardStore = create<WizardState>()((set) => ({
   llmMode: null,
   llmConfig: null,
   selectedPackages: [],
+  templateProfile: "none",
   forceReinstallPackages: [],
   networkMode: null,
   networkConfig: null,
@@ -249,6 +252,7 @@ export const useWizardStore = create<WizardState>()((set) => ({
     })),
 
   setSelectedPackages: (packages) => set({ selectedPackages: packages }),
+  setTemplateProfile: (templateProfile) => set({ templateProfile }),
 
   toggleForceReinstall: (id) =>
     set((state) => ({

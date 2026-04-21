@@ -275,6 +275,7 @@ pub async fn spock_remove_api_key() -> Result<(), String> {
 
 
 /// Find the bundled Spock/Claude binary.
+#[allow(dead_code)]
 fn find_spock_binary() -> Result<String, String> {
     // 1. Bundled next to the Tauri executable
     if let Ok(exe) = std::env::current_exe() {
